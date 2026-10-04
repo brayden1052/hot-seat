@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Hot Seat">
 <meta name="description" content="Hot Seat: a swipe-card survival satire. You're a college football head coach. Don't get fired. All schools and people are fictional.">
 <title>Hot Seat</title>
+<script>if(navigator.standalone||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches))document.documentElement.classList.add("standalone");</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/icon-192.png" sizes="192x192">
@@ -23,11 +24,17 @@
   --display:"Avenir Next Condensed","DIN Condensed","Roboto Condensed","sans-serif-condensed","Arial Narrow","Barlow Condensed",Impact,"Haettenschweiler",system-ui,sans-serif;
   --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px); --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
-  --tabh:62px; --ease:cubic-bezier(.2,.8,.2,1);
+  --tabh:54px; --ease:cubic-bezier(.2,.8,.2,1);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:var(--body)}
-body{position:fixed;inset:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+/* Shell height. Root cause of the iPhone bottom gap: body was position:fixed + height:100%. In an iOS home-screen
+   (standalone, black-translucent) app, % heights, fixed roots and even 100dvh resolve to the screen MINUS the top
+   safe area, so the whole shell came up short by ~59px. Fix: no fixed root; html/body = 100dvh in the browser
+   (tracks Safari's toolbars), 100vh in standalone (the only unit that equals the full screen there). */
+html,body{margin:0;width:100%;height:100vh;height:-webkit-fill-available;height:100dvh;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:var(--body)}
+@media (display-mode:standalone),(display-mode:fullscreen){html,body{height:100vh}}
+html.standalone,html.standalone body{height:100vh}
+body{position:relative;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
   background:
    radial-gradient(60% 40% at 12% -6%,rgba(255,236,170,.20),transparent 70%),
    radial-gradient(60% 40% at 88% -6%,rgba(255,236,170,.20),transparent 70%),
@@ -39,7 +46,8 @@ button{cursor:pointer;border:0;background:none;touch-action:manipulation}
 kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15)}
 
 /* ---------- app shell: phone-width column, desktop gets a framed device ---------- */
-.app{position:relative;margin:0 auto;height:100%;max-width:480px;display:flex;flex-direction:column;overflow:hidden;
+/* overflow:clip (not just hidden) so off-screen sheets can never make the shell programmatically scrollable */
+.app{position:relative;margin:0 auto;height:100%;max-width:480px;display:flex;flex-direction:column;overflow:hidden;overflow:clip;
   padding-top:var(--sat);padding-left:var(--sal);padding-right:var(--sar);}
 @media (min-width:700px) and (min-height:640px){
   body{display:flex;align-items:center;justify-content:center}
@@ -56,11 +64,12 @@ kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;bac
 .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 
 /* ---------- tab bar ---------- */
-.tabbar{flex:none;display:flex;height:calc(var(--tabh) + var(--sab));padding-bottom:var(--sab);
+/* safe-area-inset-bottom is applied exactly once, here, as tab-bar padding */
+.tabbar{flex:none;display:flex;height:calc(var(--tabh) + var(--sab));padding-bottom:var(--sab);padding-top:2px;
   background:rgba(8,12,26,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);z-index:5}
-.tabbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);
-  font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px;min-height:48px;transition:color .2s}
-.tabbtn svg{width:25px;height:25px;transition:transform .25s var(--ease)}
+.tabbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);
+  font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11.5px;line-height:1;min-height:48px;transition:color .2s}
+.tabbtn svg{width:24px;height:24px;transition:transform .25s var(--ease)}
 .tabbtn.active{color:var(--accent2)}
 .tabbtn.active svg{transform:translateY(-1px) scale(1.08)}
 
@@ -143,7 +152,7 @@ kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;bac
 @keyframes tick{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
 
 .stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:12px 4px 10px;perspective:900px}
-.card,.card-back{width:100%;max-width:370px;height:100%;max-height:480px;border-radius:24px}
+.card,.card-back{width:100%;max-width:400px;height:100%;max-height:600px;border-radius:24px}
 .card-back{position:absolute;transform:translateY(8px) scale(.94);background:linear-gradient(180deg,#2a3560,#1a2242);opacity:.7;border:1px solid var(--line)}
 .card{position:relative;display:flex;flex-direction:column;background:var(--card);color:var(--card-ink);padding:16px 18px 12px;overflow:hidden;
   box-shadow:0 18px 50px rgba(0,0,0,.55),0 2px 0 rgba(255,255,255,.6) inset;touch-action:none;cursor:grab;will-change:transform;transform-origin:50% 110%}
@@ -215,7 +224,7 @@ kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;bac
 .fineprint{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:18px;text-align:center}
 
 /* ---------- sheet ---------- */
-.sheet-wrap{position:absolute;inset:0;z-index:20;background:rgba(3,6,14,.0);visibility:hidden;transition:background .3s,visibility .3s;display:flex;align-items:flex-end}
+.sheet-wrap{position:absolute;inset:0;z-index:20;overflow:hidden;background:rgba(3,6,14,.0);visibility:hidden;transition:background .3s,visibility .3s;display:flex;align-items:flex-end}
 .sheet-wrap.open{visibility:visible;background:rgba(3,6,14,.6)}
 .sheet{width:100%;background:linear-gradient(180deg,#18234a,#0f1631);border-radius:26px 26px 0 0;padding:10px 20px calc(20px + var(--sab));border-top:1px solid rgba(255,255,255,.12);
   transform:translateY(105%);transition:transform .38s var(--ease)}
@@ -287,6 +296,34 @@ kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;bac
 .reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.05ms!important}}
 
+/* ---------- help button + How to Play sheet ---------- */
+.help-btn{flex:none;width:44px;height:44px;margin:-6px -6px -6px -2px;display:grid;place-items:center;border-radius:50%}
+.help-btn span{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid rgba(255,207,63,.7);color:var(--accent2);
+  font-family:var(--display);font-weight:900;font-size:18px;line-height:1;background:rgba(255,207,63,.08);transition:background .15s,transform .12s}
+.help-btn:active span{transform:scale(.92);background:rgba(255,207,63,.25)}
+.help-wrap{position:absolute;inset:0;z-index:25;overflow:hidden;display:flex;align-items:flex-end;background:rgba(3,6,14,0);visibility:hidden;transition:background .3s,visibility .3s}
+.help-wrap.open{visibility:visible;background:rgba(3,6,14,.66)}
+.help{position:relative;width:100%;max-height:min(calc(100% - var(--sat) - 16px),88%);display:flex;flex-direction:column;background:linear-gradient(180deg,#18234a,#0f1631);
+  border-radius:26px 26px 0 0;border-top:1px solid rgba(255,255,255,.12);padding:10px 18px calc(16px + var(--sab));transform:translateY(105%);transition:transform .36s var(--ease)}
+.help-wrap.open .help{transform:none}
+.help::before{content:"";display:block;width:40px;height:5px;border-radius:5px;background:rgba(255,255,255,.25);margin:0 auto 8px}
+.help .kicker{font-family:var(--display);font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent2);font-size:13px}
+.help h3{font-family:var(--display);font-weight:900;font-style:italic;text-transform:uppercase;font-size:30px;margin:0 0 8px;letter-spacing:.02em}
+.help-x{position:absolute;top:8px;right:8px;width:48px;height:48px;display:grid;place-items:center;border-radius:50%;color:var(--ink);font-size:30px;line-height:1}
+.help-x:active{background:rgba(255,255,255,.1)}
+.help-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-size:14.5px;line-height:1.45;color:#d7dcec;padding-right:2px}
+.help-body p{margin:0 0 10px}
+.help-body b{color:var(--ink)}
+.help-sec{font-family:var(--display);font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-size:12.5px;margin:14px 0 6px}
+.help-meters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 10px}
+.hm{display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.22);border-radius:12px;padding:8px 10px;font-size:12.5px;line-height:1.25}
+.hm .micon{width:30px;height:30px;flex:none}.hm .micon .fill{height:60%}
+.hm b{display:block;font-family:var(--display);font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.help-dots{display:flex;align-items:center;gap:14px;margin:4px 0 8px;font-size:12px;color:var(--muted)}
+.help-dots span{display:flex;align-items:center;gap:6px}
+.help-dots i{display:inline-block;border-radius:50%;background:var(--ink)}
+.help-ok{margin-top:12px;flex:none}
+
 </style>
 </head>
 <body>
@@ -330,6 +367,7 @@ kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;bac
           <div class="chip chip-year" id="st-year">YR 1</div>
           <div class="phase"><span id="st-phase">Offseason</span><span class="pips" id="st-pips"></span></div>
           <div class="chip chip-record" id="st-record">0–0</div>
+          <button class="help-btn" id="btn-help" aria-label="How to play" aria-haspopup="dialog"><span aria-hidden="true">?</span></button>
         </div>
         <div class="ticker" id="ticker"><span class="ticker-tag">NEWS</span><span class="ticker-body" id="ticker-body"></span></div>
         <div class="stage" id="stage">
@@ -386,7 +424,7 @@ kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;bac
           <label class="setting"><span>Reduce motion</span><input type="checkbox" id="set-motion" class="toggle"></label>
           <button class="btn btn-danger" id="btn-reset">Reset stats</button>
         </div>
-        <p class="fineprint">Hot Seat demo build. All schools, people, conferences, bowls and networks are fictional. Saved on this device only.</p>
+        <p class="fineprint">Hot Seat demo build. All schools, people, conferences, bowls and networks are fictional. Saved on this device only. v1.1.0</p>
       </div>
     </section>
   </main>
@@ -400,6 +438,17 @@ kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;bac
   <!-- Bottom sheet (AD review etc.) -->
   <div class="sheet-wrap" id="sheet-wrap" aria-hidden="true">
     <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <!-- How to Play sheet -->
+  <div class="help-wrap" id="help-wrap" aria-hidden="true">
+    <div class="help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <button class="help-x" id="help-close" aria-label="Close">&times;</button>
+      <div class="kicker">How to play</div>
+      <h3 id="help-title">Don't get fired</h3>
+      <div class="help-body" id="help-body"></div>
+      <button class="btn btn-primary btn-xl help-ok" id="help-ok"><span>Got it</span></button>
+    </div>
   </div>
 
   <!-- Fired screen -->
@@ -945,7 +994,7 @@ window.HOT_SEAT_DECK = {"schemaVersion":1,"meters":["boosters","lockerRoom","med
     if (drag && over !== drag.over) { drag.over = over; if (over) buzz(6); }
   }
   cardEl.addEventListener('pointerdown', function (e) {
-    if (busy || !run || run.ended || (e.button != null && e.button > 0)) return;
+    if (busy || helpOpen || !run || run.ended || (e.button != null && e.button > 0)) return;
     drag = { x: e.clientX, y: e.clientY, dx: 0, id: e.pointerId, over: false };
     cardEl.classList.remove('snap', 'enter');
     try { cardEl.setPointerCapture(e.pointerId); } catch (err) {}
@@ -972,8 +1021,14 @@ window.HOT_SEAT_DECK = {"schemaVersion":1,"meters":["boosters","lockerRoom","med
   });
   document.addEventListener('keydown', function (e) {
     if (e.target && e.target.tagName === 'INPUT') return;
+    if (helpOpen) {
+      if (e.key === 'Escape') { e.preventDefault(); closeHelp(); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.preventDefault(); // card input paused
+      return;
+    }
     if ($('sheet-wrap').classList.contains('open')) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); closeSheet(); } return; }
     if (currentTab !== 'play' || $('game').classList.contains('hidden') || $('fired').classList.contains('open')) return;
+    if (e.key === '?' || e.key === 'h' || e.key === 'H') { e.preventDefault(); openHelp(); return; }
     if (e.key === 'ArrowLeft') { e.preventDefault(); commit('L'); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); commit('R'); }
   });
@@ -987,7 +1042,7 @@ window.HOT_SEAT_DECK = {"schemaVersion":1,"meters":["boosters","lockerRoom","med
   }
 
   async function commit(side, fromDx) {
-    if (busy || !run || run.ended) return;
+    if (busy || helpOpen || !run || run.ended) return;
     busy = true; drag = null;
     $('btn-left').disabled = $('btn-right').disabled = true;
     buzz(12);
@@ -1175,6 +1230,48 @@ window.HOT_SEAT_DECK = {"schemaVersion":1,"meters":["boosters","lockerRoom","med
   $('btn-daily-fired').addEventListener('click', function () { startRun('daily'); });
   $('btn-home').addEventListener('click', function () { hideFired(); run = null; showTab('play'); });
 
+  /* ---------- How to Play sheet (pauses card input while open) ---------- */
+  var helpOpen = false, helpReturnFocus = null;
+  function buildHelp() {
+    var t = todayInfo();
+    var meters = [['boosters', 'The money: Buck Ransome and the collective.'], ['lockerRoom', 'Your players. Morale, buy-in, vibes.'],
+      ['media', 'Beat writers, TV and TAKE ZONE.'], ['ad', 'Your boss, Dr. Voss, and the board.']];
+    var mhtml = meters.map(function (x) { var tmp = document.createElement('div'); tmp.appendChild(micon(x[0])); return '<div class="hm">' + tmp.innerHTML + '<div><b>' + MFULL[x[0]] + '</b>' + x[1] + '</div></div>'; }).join('');
+    $('help-body').innerHTML =
+      '<p><b>Swipe the card left or right</b> to answer. You can also tap the two buttons under the card, or press <kbd>←</kbd> / <kbd>→</kbd>. Drag past the tipping point and let go to decide; drag back to change your mind.</p>' +
+      '<div class="help-sec">The four meters</div><div class="help-meters">' + mhtml + '</div>' +
+      '<p>While you drag or hover a choice, <b>dots</b> appear over the meters that choice will move. <b>Bigger dot, bigger change</b>, but the dots never tell you which way.</p>' +
+      '<div class="help-dots"><span><i style="width:6px;height:6px"></i>small</span><span><i style="width:10px;height:10px"></i>medium</span><span><i style="width:14px;height:14px"></i>big</span></div>' +
+      '<p>If <b>any meter hits 0 or 100, you\'re fired</b>. Too much love is as deadly as too little.</p>' +
+      '<div class="help-sec">Seasons &amp; games</div>' +
+      '<p>A season is 16 cards: Offseason, Recruiting, Fall Camp, Game Week, Firing Season. Each Game Week card is followed by two games (12 a season; the last is the rival). <b>Wins keep everyone off your back</b> and raise Boosters, Media and the AD; losses sink them. Talent, Locker Room and Boosters decide games.</p>' +
+      '<p>At the end of each season the <b>AD review</b> compares your wins to the ' + HS.PROGRAM.expectedWins + ' expected. Beat it and the AD and the media warm up. Miss it and they don\'t.</p>' +
+      '<div class="help-sec">Daily challenge</div>' +
+      '<p><b>Daily #' + t.n + '</b>: everyone gets the same deck and the same game results today. Your first attempt is scored; replays are practice.</p>';
+  }
+  function openHelp() {
+    if (helpOpen) return;
+    buildHelp();
+    helpOpen = true; helpReturnFocus = document.activeElement;
+    if (drag) { drag = null; cardEl.classList.add('snap'); cardEl.style.transform = ''; $('choice-tag').style.opacity = 0; }
+    setPreview(null);
+    $('help-wrap').classList.add('open'); $('help-wrap').setAttribute('aria-hidden', 'false');
+    $('help-body').scrollTop = 0;
+    setTimeout(function () { $('help-close').focus(); }, 60);
+    buzz(5);
+  }
+  function closeHelp() {
+    if (!helpOpen) return;
+    $('help-wrap').classList.remove('open'); $('help-wrap').setAttribute('aria-hidden', 'true');
+    // keep input paused until the slide-out finishes so a dismiss tap can't fall through to the card
+    setTimeout(function () { helpOpen = false; }, reduced() ? 0 : 250);
+    if (helpReturnFocus && helpReturnFocus.focus) try { helpReturnFocus.focus(); } catch (e) {}
+  }
+  $('btn-help').addEventListener('click', openHelp);
+  $('help-close').addEventListener('click', closeHelp);
+  $('help-ok').addEventListener('click', closeHelp);
+  $('help-wrap').addEventListener('click', function (e) { if (e.target === this) closeHelp(); });
+
   /* ---------- toast ---------- */
   var toastT = null;
   function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2200); }
@@ -1244,12 +1341,12 @@ window.HOT_SEAT_DECK = {"schemaVersion":1,"meters":["boosters","lockerRoom","med
   /* ---------- boot ---------- */
   document.documentElement.classList.toggle('reduce-motion', !!profile.settings.reducedMotion);
   // stop iOS rubber-banding / double-tap zoom outside scroll areas
-  document.addEventListener('touchmove', function (e) { if (!e.target.closest || !e.target.closest('.scroll,.fired-scroll,.home')) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', function (e) { if (!e.target.closest || !e.target.closest('.scroll,.fired-scroll,.home,.help-body')) e.preventDefault(); }, { passive: false });
   document.addEventListener('dblclick', function (e) { e.preventDefault(); });
   showTab('play');
   setTimeout(function () { $('splash').classList.add('gone'); }, reduced() ? 150 : 1100);
   // test/debug hook (read-only snapshot)
-  window.__hotseat = { state: function () { return run ? JSON.parse(JSON.stringify(run)) : null; }, profile: function () { return JSON.parse(JSON.stringify(profile)); }, shareText: function () { return run && run.ended ? shareText() : null; } };
+  window.__hotseat = { helpOpen: function () { return helpOpen; }, state: function () { return run ? JSON.parse(JSON.stringify(run)) : null; }, profile: function () { return JSON.parse(JSON.stringify(profile)); }, shareText: function () { return run && run.ended ? shareText() : null; } };
 })();
 
 </script>

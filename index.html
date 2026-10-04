@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#070b16">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hot Seat">
+<meta name="description" content="Hot Seat: a swipe-card survival satire. You're a college football head coach. Don't get fired. All schools and people are fictional.">
+<title>Hot Seat</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{
+  --bg:#060a14; --bg2:#0c1430; --panel:#121b36; --panel2:#18234a; --line:rgba(255,255,255,.08);
+  --ink:#f4f1e8; --muted:#8f9bbd; --accent:#ff7a1a; --accent2:#ffcf3f; --red:#ff3d3d; --green:#2fdc84;
+  --card:#f6f0e2; --card-ink:#141a2c; --card-muted:#5b6176;
+  --display:"Avenir Next Condensed","DIN Condensed","Roboto Condensed","sans-serif-condensed","Arial Narrow","Barlow Condensed",Impact,"Haettenschweiler",system-ui,sans-serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px); --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  --tabh:62px; --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:var(--body)}
+body{position:fixed;inset:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  background:
+   radial-gradient(60% 40% at 12% -6%,rgba(255,236,170,.20),transparent 70%),
+   radial-gradient(60% 40% at 88% -6%,rgba(255,236,170,.20),transparent 70%),
+   radial-gradient(120% 60% at 50% 120%,rgba(20,120,70,.30),transparent 70%),
+   linear-gradient(180deg,#0a1124 0%,#060a14 60%,#04140d 100%);}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;touch-action:manipulation}
+.hidden{display:none!important}
+kbd{font-family:var(--body);font-size:.8em;padding:1px 6px;border-radius:5px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15)}
+
+/* ---------- app shell: phone-width column, desktop gets a framed device ---------- */
+.app{position:relative;margin:0 auto;height:100%;max-width:480px;display:flex;flex-direction:column;overflow:hidden;
+  padding-top:var(--sat);padding-left:var(--sal);padding-right:var(--sar);}
+@media (min-width:700px) and (min-height:640px){
+  body{display:flex;align-items:center;justify-content:center}
+  .app{height:min(860px,calc(100vh - 40px));width:400px;border-radius:38px;border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 0 0 10px #0b0f1c,0 0 0 11px rgba(255,255,255,.08),0 40px 120px rgba(0,0,0,.7),0 0 120px rgba(255,190,90,.07);
+    background:linear-gradient(180deg,#0b1328,#070b16 55%,#05120c)}
+}
+.screens{position:relative;flex:1;min-height:0}
+.tab{position:absolute;inset:0;display:none;flex-direction:column}
+.tab.active{display:flex;animation:tabIn .28s var(--ease)}
+@keyframes tabIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.view{flex:1;min-height:0;display:flex;flex-direction:column}
+.pad{padding:14px 18px 18px}
+.scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+
+/* ---------- tab bar ---------- */
+.tabbar{flex:none;display:flex;height:calc(var(--tabh) + var(--sab));padding-bottom:var(--sab);
+  background:rgba(8,12,26,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);z-index:5}
+.tabbtn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);
+  font-family:var(--display);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px;min-height:48px;transition:color .2s}
+.tabbtn svg{width:25px;height:25px;transition:transform .25s var(--ease)}
+.tabbtn.active{color:var(--accent2)}
+.tabbtn.active svg{transform:translateY(-1px) scale(1.08)}
+
+/* ---------- buttons ---------- */
+.btn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:52px;padding:10px 18px;border-radius:16px;
+  font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:.06em;text-transform:uppercase;transition:transform .12s,filter .2s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn small{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:0;text-transform:none;opacity:.8;margin-top:2px}
+.btn-xl{min-height:64px;width:100%;font-size:23px}
+.btn-primary{background:linear-gradient(180deg,#ff9640,#ff6a10);color:#1b0d02;box-shadow:0 8px 24px rgba(255,110,20,.35),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn-ghost{background:rgba(255,255,255,.06);border:1.5px solid rgba(255,207,63,.45);color:var(--accent2)}
+.btn-light{background:var(--ink);color:#10152a}
+.btn-danger{background:rgba(255,61,61,.12);color:#ff8b8b;border:1px solid rgba(255,61,61,.35);font-size:16px;min-height:48px}
+.btn-link{color:var(--muted);font-size:15px;min-height:44px}
+:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+
+/* ---------- splash ---------- */
+.splash{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(70% 50% at 50% 35%,#1a2650,#060a14 70%);transition:opacity .45s ease,visibility .45s}
+.splash.gone{opacity:0;visibility:hidden}
+.splash-inner{display:flex;flex-direction:column;align-items:center;animation:pop .7s var(--ease) both}
+.splash-sub{font-family:var(--display);color:var(--muted);letter-spacing:.3em;text-transform:uppercase;font-size:14px;margin-top:4px}
+.splash-bar{width:120px;height:4px;border-radius:4px;background:rgba(255,255,255,.1);margin-top:26px;overflow:hidden}
+.splash-bar i{display:block;height:100%;width:40%;background:var(--accent);border-radius:4px;animation:load 1s ease-in-out infinite}
+.splash-foot{position:absolute;bottom:calc(24px + var(--sab));font-size:12px;color:var(--muted);opacity:.7}
+@keyframes load{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.logo-mark{width:92px;height:92px;filter:drop-shadow(0 8px 30px rgba(255,120,30,.45))}
+.logo-mark.big{width:128px;height:128px}
+.logo-mark svg{width:100%;height:100%}
+.logo-mark .flame{transform-origin:50% 90%;animation:flicker 1.6s ease-in-out infinite alternate}
+@keyframes flicker{0%{transform:scaleY(1) skewX(0)}50%{transform:scaleY(1.05) skewX(-2deg)}100%{transform:scaleY(.97) skewX(2deg)}}
+.wordmark{font-family:var(--display);font-weight:900;font-size:58px;line-height:.9;letter-spacing:.02em;margin:10px 0 0;font-style:italic;
+  text-shadow:0 4px 0 rgba(0,0,0,.4)}
+.wordmark span{color:var(--accent);margin-left:.12em}
+
+/* ---------- home ---------- */
+.home{padding:18px 20px 14px;justify-content:space-between;gap:12px;overflow-y:auto}
+.home-hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:4vh}
+.pitch{color:#cfd5e8;font-size:16px;line-height:1.4;max-width:300px;margin:12px 0 0}
+.home-actions{display:flex;flex-direction:column;gap:10px}
+.howto{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:16px;padding:10px 14px;font-size:13.5px;line-height:1.45;color:#c7cde0}
+.howto summary{font-family:var(--display);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent2);cursor:pointer;font-size:14px;list-style:none}
+.howto summary::-webkit-details-marker{display:none}
+.howto p{margin:6px 0 2px}
+.home-best{text-align:center;color:var(--muted);font-size:13px;min-height:18px}
+.home-best b{color:var(--ink)}
+
+/* ---------- game ---------- */
+.game{padding:6px 14px 10px}
+.meters{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 4px 2px}
+.meter{display:flex;flex-direction:column;align-items:center;gap:3px;position:relative}
+.micon{position:relative;width:44px;height:44px;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
+  background:rgba(255,255,255,.16)}
+.micon .fill{position:absolute;left:0;right:0;bottom:0;height:50%;background:linear-gradient(0deg,#ffb347,#fff1c9);transition:height .6s var(--ease),background .3s}
+.meter.danger .micon .fill{background:linear-gradient(0deg,#ff2d2d,#ff9a7a)}
+.meter.danger .micon{animation:dangerPulse 1s ease-in-out infinite}
+@keyframes dangerPulse{50%{background:rgba(255,60,60,.35)}}
+.meter.bump .micon{animation:bump .5s var(--ease)}
+@keyframes bump{30%{transform:scale(1.18)}}
+.mlabel{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.dot{width:0;height:0;border-radius:50%;background:var(--ink);opacity:0;transition:all .18s var(--ease);position:absolute;top:-7px;left:50%;transform:translateX(-50%)}
+.dot.on{opacity:1}
+.dot.s1{width:6px;height:6px;top:-6px}.dot.s2{width:10px;height:10px;top:-8px}.dot.s3{width:14px;height:14px;top:-10px}
+.meters{padding-top:14px}
+
+.statusbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding:0 2px}
+.chip{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.06em;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);white-space:nowrap}
+.chip-year{color:var(--accent2)}
+.chip-record{min-width:58px;text-align:center;transition:background .3s}
+.chip-record.win{background:rgba(47,220,132,.3)} .chip-record.loss{background:rgba(255,61,61,.3)}
+.phase{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--display);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:#dfe4f3}
+.pips{display:flex;gap:4px}.pips i{width:16px;height:3px;border-radius:3px;background:rgba(255,255,255,.18)}.pips i.done{background:var(--accent)}.pips i.now{background:var(--accent2)}
+.ticker{display:flex;align-items:center;gap:8px;margin:8px 0 0;height:28px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.35);border:1px solid var(--line);font-size:12.5px}
+.ticker-tag{flex:none;align-self:stretch;display:flex;align-items:center;padding:0 8px;background:var(--red);color:#fff;font-family:var(--display);font-weight:800;letter-spacing:.1em;font-size:12px}
+.ticker-tag.final{background:#1d6ef2}
+.ticker-body{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#d9deee;font-weight:600}
+.ticker-body .w{color:var(--green);font-weight:800}.ticker-body .l{color:#ff7272;font-weight:800}
+.ticker.flash .ticker-body{animation:tick .45s var(--ease)}
+@keyframes tick{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
+
+.stage{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:12px 4px 10px;perspective:900px}
+.card,.card-back{width:100%;max-width:370px;height:100%;max-height:480px;border-radius:24px}
+.card-back{position:absolute;transform:translateY(8px) scale(.94);background:linear-gradient(180deg,#2a3560,#1a2242);opacity:.7;border:1px solid var(--line)}
+.card{position:relative;display:flex;flex-direction:column;background:var(--card);color:var(--card-ink);padding:16px 18px 12px;overflow:hidden;
+  box-shadow:0 18px 50px rgba(0,0,0,.55),0 2px 0 rgba(255,255,255,.6) inset;touch-action:none;cursor:grab;will-change:transform;transform-origin:50% 110%}
+.card:active{cursor:grabbing}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.card.enter{animation:cardIn .38s var(--ease) both}
+@keyframes cardIn{from{transform:translateY(24px) scale(.92) rotateX(10deg);opacity:0}to{transform:none;opacity:1}}
+.card.snap{transition:transform .3s var(--ease)}
+.card.fly{transition:transform .3s cubic-bezier(.5,0,.9,.5),opacity .3s}
+.card-head{display:flex;align-items:center;gap:12px;margin-top:4px}
+.avatar{flex:none;width:76px;height:76px;border-radius:50%;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.avatar svg{width:100%;height:100%;display:block}
+.who{min-width:0}
+.who-name{font-family:var(--display);font-weight:900;font-size:24px;line-height:1;letter-spacing:.01em;text-transform:uppercase}
+.who-role{font-size:12.5px;line-height:1.3;color:var(--card-muted);margin-top:4px}
+.card-text{flex:1;display:flex;align-items:center;font-size:clamp(16px,2.35vh,20px);line-height:1.42;font-weight:550;padding:12px 2px;overflow:hidden}
+.card-foot{display:flex;justify-content:space-between;font-family:var(--display);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:11px;color:#9a9eac}
+.choice-tag{position:absolute;left:0;right:0;top:0;padding:14px 18px 12px;min-height:64px;display:flex;align-items:center;background:linear-gradient(180deg,#10162b,#1b2547);color:#fff;
+  font-family:var(--display);font-weight:800;font-size:22px;line-height:1.05;text-transform:uppercase;letter-spacing:.02em;opacity:0;z-index:3;pointer-events:none;transition:opacity .08s}
+.choice-tag.l{justify-content:flex-start;text-align:left}.choice-tag.r{justify-content:flex-end;text-align:right}
+.banner{position:absolute;left:-14px;right:-14px;top:42%;text-align:center;font-family:var(--display);font-weight:900;font-style:italic;font-size:44px;letter-spacing:.04em;
+  text-transform:uppercase;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.6);pointer-events:none;opacity:0;z-index:4;
+  background:linear-gradient(90deg,transparent,rgba(255,106,16,.92) 15%,rgba(255,106,16,.92) 85%,transparent);padding:6px 0}
+.banner small{display:block;font-size:14px;letter-spacing:.2em;font-style:normal;opacity:.9}
+.banner.show{animation:banner 1.5s var(--ease) both}
+@keyframes banner{0%{opacity:0;transform:translateX(-30%) skewX(-12deg)}18%{opacity:1;transform:none}78%{opacity:1;transform:none}100%{opacity:0;transform:translateX(30%) skewX(-12deg)}}
+
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice-btn{display:flex;align-items:center;gap:6px;min-height:64px;padding:8px 12px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  font-size:13.5px;font-weight:650;line-height:1.2;text-align:left;transition:background .15s,transform .12s,border-color .15s}
+.choice-btn.right{justify-content:flex-end;text-align:right}
+.choice-btn .arrow{font-size:20px;color:var(--accent2);flex:none}
+.choice-btn:hover,.choice-btn.hot{background:rgba(255,207,63,.14);border-color:rgba(255,207,63,.55)}
+.choice-btn:active{transform:scale(.97)}
+.choice-btn:disabled{opacity:.5}
+
+/* ---------- daily / stats ---------- */
+.tab-title{font-family:var(--display);font-weight:900;font-size:34px;font-style:italic;text-transform:uppercase;letter-spacing:.02em;margin:6px 0 14px}
+.daily-card{background:linear-gradient(160deg,#1c2a5c,#121a38);border:1px solid rgba(255,207,63,.25);border-radius:22px;padding:20px 18px;box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.daily-num{font-family:var(--display);font-weight:900;font-size:46px;line-height:1;color:var(--accent2)}
+.daily-date{color:var(--muted);font-weight:600;margin-top:2px}
+.daily-desc{font-size:14px;line-height:1.45;color:#cdd3e6}
+.daily-status{background:rgba(0,0,0,.25);border-radius:14px;padding:12px 14px;margin:0 0 14px;font-size:14px;line-height:1.4}
+.daily-status b{font-family:var(--display);font-size:20px;letter-spacing:.03em}
+.daily-next{text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
+.section-h{font-family:var(--display);font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-size:13px;margin:22px 0 10px}
+.daily-week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dw{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;border-radius:12px;background:rgba(255,255,255,.05);font-size:11px;color:var(--muted)}
+.dw b{font-family:var(--display);font-size:18px;color:var(--ink)}
+.dw.today{outline:1.5px solid var(--accent2)}
+.dw.played b{color:var(--green)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.stat b{display:block;font-family:var(--display);font-weight:900;font-size:30px;line-height:1.05}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.endings{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ending{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.12);font-size:13px;color:var(--muted)}
+.ending.got{background:rgba(255,61,61,.12);border:1px solid rgba(255,61,61,.35);color:var(--ink)}
+.ending .micon{width:28px;height:28px;flex:none}
+.ending .micon .fill{height:100%}
+.ending .mini{font-size:10.5px;color:var(--muted);display:block}
+.settings{display:flex;flex-direction:column;gap:8px}
+.setting{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:54px;padding:6px 14px;border-radius:14px;background:rgba(255,255,255,.05);font-weight:600}
+.setting small{color:var(--muted);font-weight:500}
+.setting input:not([type]){background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:55%;text-align:right;-webkit-user-select:text;user-select:text}
+.toggle{appearance:none;-webkit-appearance:none;width:52px;height:32px;border-radius:32px;background:rgba(255,255,255,.18);position:relative;transition:background .2s;flex:none;margin:0}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
+.toggle:checked{background:var(--green)}.toggle:checked::after{transform:translateX(20px)}
+.fineprint{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:18px;text-align:center}
+
+/* ---------- sheet ---------- */
+.sheet-wrap{position:absolute;inset:0;z-index:20;background:rgba(3,6,14,.0);visibility:hidden;transition:background .3s,visibility .3s;display:flex;align-items:flex-end}
+.sheet-wrap.open{visibility:visible;background:rgba(3,6,14,.6)}
+.sheet{width:100%;background:linear-gradient(180deg,#18234a,#0f1631);border-radius:26px 26px 0 0;padding:10px 20px calc(20px + var(--sab));border-top:1px solid rgba(255,255,255,.12);
+  transform:translateY(105%);transition:transform .38s var(--ease)}
+.sheet-wrap.open .sheet{transform:none}
+.sheet::before{content:"";display:block;width:40px;height:5px;border-radius:5px;background:rgba(255,255,255,.25);margin:0 auto 12px}
+.sheet h3{font-family:var(--display);font-weight:900;font-size:30px;text-transform:uppercase;font-style:italic;margin:0 0 4px;letter-spacing:.02em}
+.sheet .kicker{font-family:var(--display);font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent2);font-size:13px}
+.sheet .quote{display:flex;gap:12px;align-items:flex-start;margin:12px 0;font-size:15px;line-height:1.45;color:#dfe3f1}
+.sheet .quote .avatar{width:56px;height:56px}
+.deltas{display:flex;gap:10px;margin:10px 0 16px}
+.delta{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:12px;background:rgba(0,0,0,.25);font-family:var(--display);font-weight:800;font-size:20px}
+.delta .micon{width:24px;height:24px}.delta .micon .fill{height:100%}
+.delta.up{color:var(--green)}.delta.down{color:#ff7a7a}
+.bigrec{font-family:var(--display);font-weight:900;font-size:64px;line-height:1}
+.bigrec small{font-size:18px;color:var(--muted);letter-spacing:.1em;margin-left:8px}
+.results-row{display:flex;gap:3px;flex-wrap:wrap;margin:8px 0}
+.results-row i{width:18px;height:18px;border-radius:4px;background:rgba(255,255,255,.12);font-style:normal;font-size:10px;display:grid;place-items:center;font-weight:800}
+.results-row i.W{background:var(--green);color:#03240f}.results-row i.L{background:var(--red);color:#300}
+.results-row i.R{outline:2px solid var(--accent2)}
+
+/* ---------- fired ---------- */
+.fired{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;background:radial-gradient(90% 50% at 50% 0%,#5a0d14,#12060a 60%,#06070d);
+  visibility:hidden;opacity:0;transition:opacity .4s,visibility .4s;padding-top:var(--sat)}
+.fired.open{visibility:visible;opacity:1}
+.fired-scroll{flex:1;overflow-y:auto;padding:18px 20px 12px;display:flex;flex-direction:column;gap:12px}
+.chyron{display:flex;align-items:stretch;font-family:var(--display);font-weight:900;letter-spacing:.1em;text-transform:uppercase;border-radius:6px;overflow:hidden;align-self:flex-start;transform:skewX(-8deg)}
+.chyron .live{background:#fff;color:var(--red);padding:5px 10px;display:flex;align-items:center;gap:6px;font-size:14px}
+.chyron .live i{width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
+.chyron .brk{background:var(--red);color:#fff;padding:5px 12px;font-size:16px}
+@keyframes blink{50%{opacity:.2}}
+.headline{font-family:var(--display);font-weight:900;font-size:clamp(25px,7.2vw,32px);line-height:1.08;margin:0;text-transform:uppercase;letter-spacing:.005em}
+.fired.open .headline{animation:headIn .7s .15s var(--ease) both}
+@keyframes headIn{from{opacity:0;transform:translateY(14px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+.fired-cause{display:flex;align-items:center;gap:10px;font-weight:700;color:#ffb3b3;font-size:14px}
+.fired-cause .micon{width:34px;height:34px;background:rgba(255,80,80,.3)}
+.fired-cause .micon .fill{background:linear-gradient(0deg,#ff2d2d,#ff9a7a)}
+.fired-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.fs{background:rgba(255,255,255,.06);border-radius:12px;padding:8px 4px;text-align:center}
+.fs b{display:block;font-family:var(--display);font-weight:900;font-size:24px;line-height:1.1}
+.fs span{font-size:10.5px;color:#c9a9ad;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.fired-seasons{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#e7d6d8}
+.fired-seasons .srow{display:flex;align-items:center;gap:8px}
+.fired-seasons .srow b{font-family:var(--display);width:30px}
+.fired-seasons .results-row{margin:0;flex-wrap:nowrap;flex:none}
+.fired-seasons .srow span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fired-seasons .results-row i{width:13px;height:13px;font-size:0}
+.fired-badge{min-height:0;text-align:center}
+.fired-badge span{display:inline-block;padding:5px 12px;border-radius:999px;background:var(--accent2);color:#1a1200;font-family:var(--display);font-weight:900;letter-spacing:.1em;text-transform:uppercase;font-size:14px;animation:pop .5s .5s var(--ease) both}
+.fired-badge span.muted{background:rgba(255,255,255,.12);color:var(--ink)}
+.fired-actions{display:flex;flex-direction:column;gap:10px;margin-top:auto}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fired-crawl{flex:none;height:30px;background:#000;color:#ffd7d7;overflow:hidden;white-space:nowrap;font-family:var(--display);font-weight:700;letter-spacing:.06em;font-size:14px;display:flex;align-items:center;margin-bottom:var(--sab)}
+.fired-crawl span{display:inline-block;padding-left:100%;animation:crawl 26s linear infinite}
+@keyframes crawl{to{transform:translateX(-100%)}}
+
+/* ---------- toast ---------- */
+.toast{position:absolute;left:50%;bottom:calc(var(--tabh) + var(--sab) + 14px);transform:translate(-50%,20px);background:#fff;color:#10152a;font-weight:700;font-size:14px;
+  padding:10px 16px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:all .25s var(--ease);z-index:60;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- small phones ---------- */
+@media (max-height:700px){
+  .avatar{width:58px;height:58px}.who-name{font-size:20px}.who-role{font-size:11.5px}
+  .card{padding:14px 14px 10px}.card-text{font-size:15.5px;line-height:1.36;padding:8px 0}
+  .micon{width:36px;height:36px}.ticker{margin-top:6px}.choice-btn{min-height:56px;font-size:12.5px}
+  .wordmark{font-size:48px}.logo-mark{width:72px;height:72px}.home-hero{padding-top:0}
+}
+@media (max-width:370px){.mlabel{font-size:9.5px}.choice-btn{font-size:12.5px}}
+.reduce-motion *,.reduce-motion *::before,.reduce-motion *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.05ms!important}}
+
+</style>
+</head>
+<body>
+<div id="app" class="app">
+
+  <!-- Splash / launch screen -->
+  <div id="splash" class="splash" aria-hidden="true">
+    <div class="splash-inner">
+      <div class="logo-mark big"><svg viewBox="0 0 100 100"><defs><linearGradient id="hsF0" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d0d"/><stop offset=".55" stop-color="#ff8a1f"/><stop offset="1" stop-color="#ffd23f"/></linearGradient><linearGradient id="hsI0" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffb03a"/><stop offset="1" stop-color="#fff2b0"/></linearGradient></defs><g class="flame"><path fill="url(#hsF0)" d="M50 3c8 16 25 25 25 48 0 15-11 25-25 25S25 66 25 51c0-11 6-18 11-26 1 8 4 12 8 15-2-13 2-25 6-37z"/><path fill="url(#hsI0)" d="M50 30c5 10 13 15 13 25 0 9-6 15-13 15s-13-6-13-14c0-6 4-10 7-14 1 5 3 7 5 8-1-7-1-13 1-20z"/></g><rect x="29" y="50" width="42" height="24" rx="7" fill="#f4f1e8"/><rect x="29" y="58" width="42" height="5" fill="#ff7a1a"/><rect x="22" y="72" width="56" height="10" rx="4" fill="#f4f1e8"/><rect x="29" y="82" width="6" height="13" rx="2" fill="#c9c4b6"/><rect x="65" y="82" width="6" height="13" rx="2" fill="#c9c4b6"/></svg></div>
+      <div class="wordmark">HOT<span>SEAT</span></div>
+      <div class="splash-sub">Don't get fired.</div>
+      <div class="splash-bar"><i></i></div>
+    </div>
+    <div class="splash-foot">All schools &amp; people are fictional</div>
+  </div>
+
+  <main class="screens">
+    <!-- PLAY TAB -->
+    <section id="tab-play" class="tab active" aria-label="Play">
+      <div id="home" class="home view">
+        <div class="home-hero">
+          <div class="logo-mark"><svg viewBox="0 0 100 100"><defs><linearGradient id="hsF1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff4d0d"/><stop offset=".55" stop-color="#ff8a1f"/><stop offset="1" stop-color="#ffd23f"/></linearGradient><linearGradient id="hsI1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ffb03a"/><stop offset="1" stop-color="#fff2b0"/></linearGradient></defs><g class="flame"><path fill="url(#hsF1)" d="M50 3c8 16 25 25 25 48 0 15-11 25-25 25S25 66 25 51c0-11 6-18 11-26 1 8 4 12 8 15-2-13 2-25 6-37z"/><path fill="url(#hsI1)" d="M50 30c5 10 13 15 13 25 0 9-6 15-13 15s-13-6-13-14c0-6 4-10 7-14 1 5 3 7 5 8-1-7-1-13 1-20z"/></g><rect x="29" y="50" width="42" height="24" rx="7" fill="#f4f1e8"/><rect x="29" y="58" width="42" height="5" fill="#ff7a1a"/><rect x="22" y="72" width="56" height="10" rx="4" fill="#f4f1e8"/><rect x="29" y="82" width="6" height="13" rx="2" fill="#c9c4b6"/><rect x="65" y="82" width="6" height="13" rx="2" fill="#c9c4b6"/></svg></div>
+          <h1 class="wordmark">HOT<span>SEAT</span></h1>
+          <p class="pitch">You're the head coach at Ashgrove State. Your only job: don't get fired.</p>
+        </div>
+        <div class="home-actions">
+          <button id="btn-continue" class="btn btn-primary btn-xl hidden"><span>Continue</span><small id="continue-sub"></small></button>
+          <button id="btn-play" class="btn btn-primary btn-xl"><span>Play</span><small>New career · random seed</small></button>
+          <button id="btn-daily-home" class="btn btn-ghost btn-xl"><span id="daily-home-label">Daily</span><small id="daily-home-sub">Same deck for everyone today</small></button>
+        </div>
+        <details class="howto" open>
+          <summary>How to play</summary>
+          <p>Swipe the card <b>left</b> or <b>right</b> (or tap the buttons, or use <kbd>←</kbd> <kbd>→</kbd>). Every choice moves four meters: <b>Boosters</b>, <b>Locker Room</b>, <b>Media</b> and the <b>AD</b>. Dots show which meters a choice will move. Bigger dot, bigger move, but you never know which way. Let any meter hit <b>empty</b> or <b>max</b> and you're fired. Win games to keep everyone off your back.</p>
+        </details>
+        <div id="home-best" class="home-best"></div>
+      </div>
+
+      <div id="game" class="game view hidden">
+        <header class="meters" id="meters"></header>
+        <div class="statusbar">
+          <div class="chip chip-year" id="st-year">YR 1</div>
+          <div class="phase"><span id="st-phase">Offseason</span><span class="pips" id="st-pips"></span></div>
+          <div class="chip chip-record" id="st-record">0–0</div>
+        </div>
+        <div class="ticker" id="ticker"><span class="ticker-tag">NEWS</span><span class="ticker-body" id="ticker-body"></span></div>
+        <div class="stage" id="stage">
+          <div class="card-back"></div>
+          <div class="card" id="card" tabindex="0" aria-live="polite">
+            <div class="choice-tag" id="choice-tag"></div>
+            <div class="card-head">
+              <div class="avatar" id="card-avatar"></div>
+              <div class="who">
+                <div class="who-name" id="card-name"></div>
+                <div class="who-role" id="card-role"></div>
+              </div>
+            </div>
+            <div class="card-text" id="card-text"></div>
+            <div class="card-foot"><span id="card-chain"></span><span class="card-swipe-hint">← swipe →</span></div>
+          </div>
+          <div class="banner" id="banner"></div>
+        </div>
+        <div class="choices">
+          <button class="choice-btn left" id="btn-left"><span class="arrow">←</span><span class="lbl" id="lbl-left"></span></button>
+          <button class="choice-btn right" id="btn-right"><span class="lbl" id="lbl-right"></span><span class="arrow">→</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- DAILY TAB -->
+    <section id="tab-daily" class="tab" aria-label="Daily challenge">
+      <div class="view pad scroll">
+        <div class="tab-title">Daily Challenge</div>
+        <div class="daily-card">
+          <div class="daily-num" id="daily-num">Daily #1</div>
+          <div class="daily-date" id="daily-date"></div>
+          <p class="daily-desc">Everyone gets the same deck and the same game results today. Swipe the same, get the same run. First attempt counts; replays are practice.</p>
+          <div class="daily-status" id="daily-status"></div>
+          <button id="btn-daily" class="btn btn-primary btn-xl"><span>Play Daily</span><small id="daily-btn-sub"></small></button>
+          <div class="daily-next" id="daily-next"></div>
+        </div>
+        <div class="section-h">Last 7 days</div>
+        <div class="daily-week" id="daily-week"></div>
+      </div>
+    </section>
+
+    <!-- STATS TAB -->
+    <section id="tab-stats" class="tab" aria-label="Stats">
+      <div class="view pad scroll">
+        <div class="tab-title">Stats</div>
+        <div class="stat-grid" id="stat-grid"></div>
+        <div class="section-h">Ways you've been fired <span id="endings-count"></span></div>
+        <div class="endings" id="endings"></div>
+        <div class="section-h">Settings</div>
+        <div class="settings">
+          <label class="setting"><span>Coach name</span><input id="set-coach" maxlength="24" autocomplete="off" spellcheck="false"></label>
+          <label class="setting"><span>Haptics <small>(Android/Chrome)</small></span><input type="checkbox" id="set-haptics" class="toggle"></label>
+          <label class="setting"><span>Reduce motion</span><input type="checkbox" id="set-motion" class="toggle"></label>
+          <button class="btn btn-danger" id="btn-reset">Reset stats</button>
+        </div>
+        <p class="fineprint">Hot Seat demo build. All schools, people, conferences, bowls and networks are fictional. Saved on this device only.</p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar" id="tabbar" role="tablist">
+    <button class="tabbtn active" data-tab="play" role="tab"><svg viewBox="0 0 24 24"><path d="M12 3C6.5 3 3 7.5 3 12s3.5 9 9 9 9-4.5 9-9-3.5-9-9-9zm0 0v18M7 8.5l10 7M17 8.5l-10 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Play</span></button>
+    <button class="tabbtn" data-tab="daily" role="tab"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="2" fill="currentColor"/></svg><span>Daily</span></button>
+    <button class="tabbtn" data-tab="stats" role="tab"><svg viewBox="0 0 24 24"><path d="M5 20V12M10 20V6M15 20v-9M20 20V4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span>Stats</span></button>
+  </nav>
+
+  <!-- Bottom sheet (AD review etc.) -->
+  <div class="sheet-wrap" id="sheet-wrap" aria-hidden="true">
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <!-- Fired screen -->
+  <div class="fired" id="fired" aria-hidden="true">
+    <div class="fired-scroll">
+      <div class="chyron"><span class="live"><i></i>LIVE</span><span class="brk">BREAKING NEWS</span></div>
+      <h2 class="headline" id="fired-headline"></h2>
+      <div class="fired-cause" id="fired-cause"></div>
+      <div class="fired-stats" id="fired-stats"></div>
+      <div class="fired-seasons" id="fired-seasons"></div>
+      <div class="fired-badge" id="fired-badge"></div>
+      <div class="fired-actions">
+        <button class="btn btn-primary btn-xl" id="btn-copy"><span>Copy result</span><small>Emoji share text</small></button>
+        <button class="btn btn-ghost hidden" id="btn-share">Share…</button>
+        <div class="row2">
+          <button class="btn btn-light" id="btn-again">Play again</button>
+          <button class="btn btn-ghost" id="btn-daily-fired">Daily challenge</button>
+        </div>
+        <button class="btn btn-link" id="btn-home">Back to menu</button>
+      </div>
+    </div>
+    <div class="fired-crawl"><span id="fired-crawl"></span></div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+</div>
+<script>
+window.HOT_SEAT_DECK = {"schemaVersion":1,"meters":["boosters","lockerRoom","media","ad"],"phases":["offseason","recruiting","fallCamp","gameWeek","firingSeason"],"defaults":{"school":"Ashgrove State","mascot":"Thunder Goat","rival":"Hollow Creek Tech","conference":"the Mega 20 (currently 23 members)"},"characters":{"booster":{"name":"Buck Ransome","role":"Mega-booster. Owns 41 Ransome Truck World locations and a jet with his face on it.","silhouette":"cowboy-hat"},"ad":{"name":"Dr. Pamela Voss","role":"Athletic Director. Measures patience in fiscal quarters.","silhouette":"blazer-clipboard"},"qb":{"name":"Kade Bellweather","role":"Star QB. 1.4 million followers, one pick-six habit.","silhouette":"helmet-under-arm"},"nil":{"name":"Skyler Vance","role":"CEO of the Gold Standard Collective (NIL). Always on a call.","silhouette":"quarter-zip-phone"},"reporter":{"name":"Marty Oberholtzer","role":"Beat reporter, The Daily Clarion. Has covered six coaches.","silhouette":"notepad-glasses"},"host":{"name":"Chad \"The Hammer\" Brix","role":"Host of TAKE ZONE, four hours of yelling every weekday.","silhouette":"headphones-pointing"},"president":{"name":"President Eleanor Whitcomb-Haas","role":"University President. Says \"brand\" a lot.","silhouette":"pearls-podium"},"oc":{"name":"Lyle Danforth","role":"Offensive Coordinator. Visor, laptop, ambitions.","silhouette":"visor-laptop"},"rival":{"name":"Rusty Kettleman","role":"Head coach at {rival}. Professional troll.","silhouette":"whistle-smirk"},"parent":{"name":"Gary Lindqvist","role":"Father and \"brand manager\" of five-star OT Bo Lindqvist.","silhouette":"polo-sunglasses"},"captain":{"name":"\"Big Ox\" Hendricks","role":"Senior center and team captain. Voice of the locker room.","silhouette":"lineman"},"producer":{"name":"Trish Albrecht","role":"TV network producer. Owns your kickoff time.","silhouette":"headset-stopwatch"}},"endings":{"boosters_low":"BREAKING: {school} boosters raise {coach}'s entire {buyout} buyout in 72 hours through a \"Fire Fund\"; coach out after {record} season","boosters_high":"BREAKING: Booster group completes takeover of {school} football; {coach} kept on as \"spokes-coach\" after {record} season","lockerRoom_low":"BREAKING: Entire {school} roster enters transfer portal; {coach} fired after {record} season with only the long snapper remaining","lockerRoom_high":"BREAKING: {school} players vote to make practice optional; {coach} out after {record} season as program reaches \"maximum vibes\"","media_low":"BREAKING: {coach} fired after {record} season as TAKE ZONE parking-lot broadcast enters day 41","media_high":"BREAKING: {coach} leaves {school} at halftime to take TV studio analyst job; {record} season finished by the OC","ad_low":"BREAKING: {school} fires {coach} \"for cause\" after {record} season, citing \"vibes\"; lawyers dispute {buyout} buyout","ad_high":"BREAKING: {school} AD retires and names {coach} as successor; new AD's first act is firing the football coach ({coach}) after {record} season"},"cards":[{"id":"off_jet_offer","character":"booster","text":"Coach, the jet's yours for recruiting. Leather seats, gold faucets, my face on the tail. One tiny thing: my nephew Trent starts the spring game at quarterback. He's very coachable. He's 26.","conditions":{"phases":["offseason"]},"tags":["chain:trent","booster-jet"],"left":{"label":"No jet. No Trent.","effects":{"boosters":-15,"lockerRoom":10,"ad":5}},"right":{"label":"Welcome aboard, Trent.","effects":{"boosters":15,"lockerRoom":-10,"media":-5},"setFlags":["trent_in"],"next":{"card":"camp_trent","delay":3}}},{"id":"off_supercar","character":"nil","text":"Kade's camp wants a Supercar Clause: 30 touchdowns and the collective buys him a lime-green Italian supercar. At 31 touchdowns it comes with a matching helmet. For the car.","conditions":{"phases":["offseason"]},"tags":["chain:supercar","nil"],"left":{"label":"Offer a sensible sedan.","effects":{"boosters":5,"lockerRoom":-10,"ad":5}},"right":{"label":"Approve the clause.","effects":{"boosters":-5,"lockerRoom":10,"ad":-5},"setFlags":["supercar_clause"],"next":{"card":"gw_supercar","delay":4}}},{"id":"off_realignment","character":"president","text":"Wonderful news! We've accepted an invitation to {conference}. Our closest conference opponent is 1,900 miles away. The TV money is enormous. The swim team will commute by ocean.","conditions":{"phases":["offseason"]},"tags":["chain:realignment","realignment"],"left":{"label":"Oppose it publicly.","effects":{"lockerRoom":10,"media":5,"ad":-15}},"right":{"label":"\"Exciting times for our brand!\"","effects":{"boosters":10,"lockerRoom":-10,"media":-10,"ad":10},"setFlags":["realigned"],"next":{"card":"gw_timezone","delay":4}}},{"id":"off_spreadsheet","character":"oc","text":"I fed 40 years of play-by-play into a spreadsheet. It says never punt, onside kick every time, and go for two after field goals. I asked if that last one is legal. The spreadsheet said \"trust me.\"","conditions":{"phases":["offseason"]},"tags":["chain:analytics","analytics"],"left":{"label":"We punt like our forefathers.","effects":{"boosters":10,"lockerRoom":-5,"media":-5}},"right":{"label":"Let the spreadsheet cook.","effects":{"boosters":-10,"lockerRoom":5,"media":5},"setFlags":["analytics_mode"],"next":{"card":"gw_fourth_and_19","delay":3}}},{"id":"off_extension","character":"ad","text":"The board wants to extend you through 2034 with a $46 million buyout. It shows commitment. It also means if this goes badly, we're both going to be on the news.","conditions":{"phases":["offseason"]},"tags":["buyout"],"left":{"label":"Sign it.","effects":{"boosters":-5,"lockerRoom":10,"media":5,"ad":-10},"setFlags":["big_buyout"]},"right":{"label":"Keep it short. I like pressure.","effects":{"lockerRoom":-10,"ad":10}}},{"id":"off_coachspeak","character":"reporter","text":"Quick one for the spring preview: how's the QB competition? And please don't say \"we're just focused on getting 1% better.\" I've typed that sentence so often my keyboard autocompletes it.","conditions":{"phases":["offseason"]},"tags":["coachspeak"],"left":{"label":"\"Just focused on getting 1% better.\"","effects":{"lockerRoom":5,"media":-10,"ad":5}},"right":{"label":"\"Honestly? It's a crime scene.\"","effects":{"lockerRoom":-10,"media":15,"ad":-5}}},{"id":"off_portal_exodus","character":"captain","text":"Coach, 31 guys entered the portal overnight. Most are starters. Two are managers. One is the guy who runs the smoke machine, and honestly that one hurts.","conditions":{"phases":["offseason"]},"tags":["portal"],"left":{"label":"Win them back with NIL promises.","effects":{"boosters":-10,"lockerRoom":10},"talent":2},"right":{"label":"Let them go. Culture wins.","effects":{"lockerRoom":-5,"media":-5,"ad":10},"talent":-3}},{"id":"off_donor_dinner","character":"president","text":"The donor dinner is Saturday. Please speak about \"academic excellence.\" And please don't mention the year our team GPA was briefly mistaken for our yards per carry.","conditions":{"phases":["offseason"]},"tags":["boosters"],"left":{"label":"Skip it. I'm with my players.","effects":{"boosters":-10,"lockerRoom":10}},"right":{"label":"Give the speech.","effects":{"boosters":10,"lockerRoom":-10,"media":-5,"ad":5}}},{"id":"rec_director_of_bo","character":"parent","text":"Bo's brand is family. So I'd need a job on your staff. Title: Director of Bo. Salary: whatever the Director of Football Ops makes, plus one dollar, so everyone knows.","conditions":{"phases":["recruiting"]},"tags":["chain:gary","recruiting-parent"],"left":{"label":"Hire Gary.","effects":{"boosters":10,"lockerRoom":-5,"ad":-10},"talent":6,"setFlags":["hired_gary"],"next":{"card":"rec_little_brother","delay":2}},"right":{"label":"Pass on the Lindqvists.","effects":{"boosters":-10,"media":5,"ad":5}}},{"id":"rec_little_brother","character":"parent","text":"Gary here, Director of Bo. Small thing: Bo's little brother is a kicker. Smaller thing: he's nine. He has a highlight tape, an agent, and a verbal offer from {rival}.","conditions":{"phases":["recruiting"],"requiresFlags":["hired_gary"]},"chainOnly":true,"once":true,"tags":["chain:gary","recruiting-parent"],"left":{"label":"Offer the nine-year-old.","effects":{"boosters":5,"lockerRoom":-5,"media":10,"ad":-10}},"right":{"label":"Fire the Director of Bo.","effects":{"boosters":-10,"lockerRoom":10,"media":-5,"ad":5},"talent":-6,"clearFlags":["hired_gary"]}},{"id":"rec_visit_budget","character":"nil","text":"For the official visit I've booked a petting zoo, a drone show of the recruit's face, and a DJ who once opened for a guy who opened for someone famous. Total: $412,000.","conditions":{"phases":["recruiting"]},"tags":["recruiting-visit","nil"],"left":{"label":"Do it all.","effects":{"boosters":-5,"lockerRoom":5,"media":5,"ad":-5},"talent":5},"right":{"label":"Pizza and a weight-room tour.","effects":{"boosters":5,"media":-10,"ad":5},"talent":-2}},{"id":"rec_three_hats","character":"reporter","text":"Signing day. Five-star WR Zay Pemberton has three hats on the table: ours, {rival}'s, and a plain one that just says HAT. Sources say HAT has momentum.","conditions":{"phases":["recruiting"],"forbidsFlags":["jet_revoked"]},"tags":["booster-jet","recruiting"],"left":{"label":"Send Buck's jet for a midnight visit.","effects":{"boosters":10,"ad":-10},"talent":4},"right":{"label":"Play it cool.","effects":{"boosters":-10,"media":5,"ad":5}}},{"id":"rec_portal_qb","character":"nil","text":"A transfer QB just hit the portal. Four schools in four years: either a journeyman or a very well-traveled leader. His ask is $3.2 million and his own podcast.","conditions":{"phases":["recruiting"]},"tags":["portal","nil"],"left":{"label":"Sign him.","effects":{"boosters":10,"lockerRoom":-10,"ad":-5},"talent":5},"right":{"label":"We ride with Kade.","effects":{"boosters":-5,"lockerRoom":10,"media":-5}}},{"id":"rec_rival_shirt","character":"rival","text":"Rusty Kettleman showed up at your top recruit's high school wearing a T-shirt that says \"{school}: A GREAT COMMUTER SCHOOL.\" It is a great commuter school. That's not the point.","conditions":{"phases":["recruiting"]},"tags":["rival"],"left":{"label":"Clap back online.","effects":{"boosters":5,"lockerRoom":-5,"media":5,"ad":-10}},"right":{"label":"Take the high road.","effects":{"boosters":-5,"media":-5,"ad":10}}},{"id":"rec_calendar","character":"ad","text":"The early signing period, bowl prep, the portal window and finals week now all land in the same seven days. Whoever designed the college football calendar has a personal grudge against you.","conditions":{"phases":["recruiting"]},"tags":["calendar"],"left":{"label":"Recruiting comes first.","effects":{"boosters":10,"lockerRoom":-10},"talent":4},"right":{"label":"Current players come first.","effects":{"boosters":-5,"lockerRoom":10,"media":-5},"talent":-2}},{"id":"rec_class_ranking","character":"host","text":"Your recruiting class is ranked SIXTY-FIRST. That's behind a school that doesn't even HAVE a football team. They just have incredible vibes!","conditions":{"phases":["recruiting"]},"tags":["hot-take"],"left":{"label":"Call in to the show.","effects":{"lockerRoom":-5,"media":10,"ad":-5}},"right":{"label":"Ignore him.","effects":{"lockerRoom":5,"media":-10,"ad":5}}},{"id":"camp_trent","character":"booster","text":"Trent threw four picks in the spring game. My people say the wind was paid off by {rival}. He starts Week 1, or the jet goes back to Ransome Truck World.","conditions":{"phases":["fallCamp"],"requiresFlags":["trent_in"]},"chainOnly":true,"once":true,"tags":["chain:trent","booster-jet"],"left":{"label":"Bench Trent.","effects":{"boosters":-10,"lockerRoom":10},"setFlags":["jet_revoked"],"clearFlags":["trent_in"]},"right":{"label":"Trent's our starter.","effects":{"boosters":10,"lockerRoom":-10},"talent":-5,"setFlags":["trent_starting"],"clearFlags":["trent_in"],"next":{"card":"gw_trent_presser","delay":2}}},{"id":"camp_lazy_river","character":"captain","text":"The social team wants to film a hype video in the new $90 million facility's lazy river. During practice. They promise it will \"do numbers\" with recruits.","conditions":{"phases":["fallCamp"]},"tags":["facilities"],"left":{"label":"Lights, camera, lazy river.","effects":{"boosters":-5,"lockerRoom":5,"media":10,"ad":-10}},"right":{"label":"Practice is practice.","effects":{"lockerRoom":-5,"media":-5,"ad":10}}},{"id":"camp_cologne","character":"qb","text":"Coach, I'm launching a signature cologne. Notes of turf, victory, and two-minute drill. The collective wants the whole team wearing it at media day.","conditions":{"phases":["fallCamp"]},"tags":["nil"],"left":{"label":"Mandatory cologne.","effects":{"boosters":10,"lockerRoom":-10}},"right":{"label":"Absolutely not.","effects":{"boosters":-5,"lockerRoom":5}}},{"id":"camp_depth_chart","character":"reporter","text":"Your depth chart lists \"OR\" at nine positions. Including head coach. Typo?","conditions":{"phases":["fallCamp"]},"tags":["coachspeak"],"left":{"label":"Name starters today.","effects":{"lockerRoom":-10,"media":10}},"right":{"label":"\"The ORs are earned.\"","effects":{"lockerRoom":10,"media":-10}}},{"id":"camp_doombot","character":"oc","text":"Devin, our 19-year-old analytics intern, built a model that projects us at 4-8. It leaked. Fans named it DOOMBOT, and its parody account has more followers than you.","conditions":{"phases":["fallCamp"]},"tags":["analytics"],"left":{"label":"Unplug DOOMBOT.","effects":{"boosters":5,"media":-10,"ad":5}},"right":{"label":"\"DOOMBOT is our motivation.\"","effects":{"boosters":-5,"lockerRoom":5,"media":10,"ad":-10}}},{"id":"gw_trent_presser","character":"reporter","text":"Trent has been sacked nine times. During the last one he was mid-interview with the sideline reporter. Your thoughts?","conditions":{"phases":["gameWeek"],"requiresFlags":["trent_starting"]},"chainOnly":true,"once":true,"tags":["chain:trent","coachspeak"],"left":{"label":"Pull him at halftime.","effects":{"boosters":-10,"lockerRoom":10},"clearFlags":["trent_starting"]},"right":{"label":"\"Trent gives us the best chance to win.\"","effects":{"boosters":15,"lockerRoom":-10,"media":-5}}},{"id":"gw_supercar","character":"qb","text":"Touchdown number 30! The collective delivered the supercar at midfield. I parked it on the 50-yard-line logo and I'm not moving it. It's for the vibes, Coach.","conditions":{"phases":["gameWeek"],"requiresFlags":["supercar_clause"]},"chainOnly":true,"once":true,"tags":["chain:supercar","nil"],"left":{"label":"Have it towed.","effects":{"lockerRoom":-10,"media":-5,"ad":10}},"right":{"label":"Play around it.","effects":{"lockerRoom":10,"media":5,"ad":-15}}},{"id":"gw_timezone","character":"captain","text":"Our conference road game kicks off at 10:30 PM our time, on a Tuesday, 1,900 miles away. Half the O-line has a chemistry midterm at 8 AM. The other half thinks chemistry is a vibe.","conditions":{"phases":["gameWeek"],"requiresFlags":["realigned"]},"chainOnly":true,"once":true,"tags":["chain:realignment","realignment"],"left":{"label":"Fly the professors with us.","effects":{"boosters":-10,"lockerRoom":10}},"right":{"label":"Midterms first. Fly out game day.","effects":{"lockerRoom":-10,"ad":10}}},{"id":"gw_tv_timeout","character":"producer","text":"We need a four-minute TV timeout after every kickoff, and a TV timeout after every TV timeout. Also, we're moving you to 9 AM so you fit between two games that matter more.","conditions":{"phases":["gameWeek"]},"tags":["tv"],"left":{"label":"Money is money.","effects":{"boosters":5,"lockerRoom":-10,"media":-5,"ad":10}},"right":{"label":"Complain on the radio show.","effects":{"lockerRoom":5,"media":10,"ad":-15}}},{"id":"gw_fourth_and_19","character":"host","text":"{school} went for it on fourth-and-19 from their own 3! This isn't a SPREADSHEET, Coach, it's FOOTBALL! My next guest has never opened a spreadsheet and he is PROUD of it!","conditions":{"phases":["gameWeek"],"requiresFlags":["analytics_mode"]},"chainOnly":true,"once":true,"tags":["chain:analytics","hot-take"],"left":{"label":"\"The math was right.\"","effects":{"lockerRoom":5,"media":-10,"ad":5}},"right":{"label":"Blame the OC on live radio.","effects":{"lockerRoom":-10,"media":10},"clearFlags":["analytics_mode"]}},{"id":"gw_rivalry_presser","character":"rival","text":"Rivalry week. Rusty Kettleman just held his press conference wearing a {mascot} head and pretending to cry. The whole state saw it. Your move.","conditions":{"phases":["gameWeek"]},"tags":["rival"],"left":{"label":"Wear a Rusty mask to your presser.","effects":{"lockerRoom":5,"media":10,"ad":-15}},"right":{"label":"Praise his \"fine program.\"","effects":{"boosters":-10,"ad":10}}},{"id":"gw_headset","character":"booster","text":"Buck has joined you on the sideline wearing a headset. It isn't connected to anything. He's calling plays into it anyway, loudly, and some of your players are listening.","conditions":{"phases":["gameWeek"]},"tags":["booster"],"left":{"label":"Escort him off.","effects":{"boosters":-15,"lockerRoom":10,"ad":5}},"right":{"label":"Let him cook.","effects":{"boosters":10,"lockerRoom":-10}}},{"id":"gw_fake_punt","character":"reporter","text":"After a three-point loss: why did you call a fake punt from your own 10? (The honest answer is that you thought it would be funny.)","conditions":{"phases":["gameWeek"]},"tags":["coachspeak"],"left":{"label":"Tell the truth.","effects":{"boosters":-5,"media":10,"ad":-10}},"right":{"label":"\"Situational football.\"","effects":{"lockerRoom":5,"media":-10,"ad":5}}},{"id":"gw_bench_stream","character":"qb","text":"I threw a pick-six, so I went live from the bench to address the haters. 1.2 million people are watching, Coach. That's more than the actual broadcast.","conditions":{"phases":["gameWeek"]},"tags":["nil","media"],"left":{"label":"Confiscate the phone.","effects":{"lockerRoom":-10,"ad":10}},"right":{"label":"Hop on the stream.","effects":{"boosters":-5,"lockerRoom":5,"media":10,"ad":-10}}},{"id":"gw_chrome","character":"ad","text":"Equipment wants to debut chrome alternate uniforms this week. Players love them. Early TV tests show the cameras can't read the numbers, find the players, or look directly at them.","conditions":{"phases":["gameWeek"]},"tags":["uniforms"],"left":{"label":"Chrome it is.","effects":{"boosters":-5,"lockerRoom":10,"media":5,"ad":-10}},"right":{"label":"Classic uniforms only.","effects":{"boosters":5,"lockerRoom":-10,"ad":5}}},{"id":"gw_parking_lot","character":"host","text":"I'm doing my whole four-hour show from YOUR stadium parking lot until you're FIRED. I brought a tent, a generator, and nowhere else to be!","conditions":{"phases":["gameWeek"]},"tags":["hot-take"],"left":{"label":"Bring him coffee.","effects":{"boosters":-5,"lockerRoom":-5,"media":10}},"right":{"label":"Have him towed.","effects":{"boosters":5,"media":-10,"ad":5}}},{"id":"gw_monster_truck","character":"nil","text":"The collective is $2.1 million short this month. Buck will cover it if you star in a Ransome Truck World ad where a monster truck crushes a car painted in {rival} colors. He wants you in the car.","conditions":{"phases":["gameWeek"]},"tags":["nil","booster"],"left":{"label":"Get in the car.","effects":{"boosters":15,"lockerRoom":-5,"media":-5,"ad":-5}},"right":{"label":"I'm a coach, not a stuntman.","effects":{"boosters":-10,"lockerRoom":5,"ad":5}}},{"id":"gw_oc_interview","character":"oc","text":"I interviewed for three head coaching jobs this week, so tonight I'm calling plays over video from an airport lounge two time zones away. The Wi-Fi is mostly fine.","conditions":{"phases":["gameWeek"]},"tags":["coaching-carousel"],"left":{"label":"Let him go now.","effects":{"lockerRoom":-10,"ad":10}},"right":{"label":"Have the boosters match.","effects":{"boosters":-10,"lockerRoom":10}}},{"id":"fire_dignity","character":"ad","text":"The board ran the numbers. Firing you costs {buyout}. Keeping you costs, quote, \"our dignity.\" Right now they think dignity is the more expensive one.","conditions":{"phases":["firingSeason"]},"tags":["buyout"],"left":{"label":"Promise a full staff \"reset.\"","effects":{"lockerRoom":-10,"ad":10}},"right":{"label":"Remind them about the buyout.","effects":{"lockerRoom":10,"ad":-10}}},{"id":"fire_opt_out","character":"qb","text":"My agent says if I sit out the bowl game, my draft stock goes up. If I sit out the rest of my life, it goes up even more.","conditions":{"phases":["firingSeason"]},"tags":["nil","draft"],"left":{"label":"Respect the business.","effects":{"boosters":-5,"lockerRoom":10,"media":-5}},"right":{"label":"Guilt-trip him with a hype video.","effects":{"boosters":5,"lockerRoom":-10,"media":5}}},{"id":"fire_airport","character":"president","text":"Yes, I was at the airport with a search-firm consultant and a man in a visor. I assure you, Coach, that meeting was about the marching band.","conditions":{"phases":["firingSeason"]},"tags":["coaching-carousel"],"left":{"label":"Call her out publicly.","effects":{"boosters":5,"media":10,"ad":-15}},"right":{"label":"Pretend you saw nothing.","effects":{"media":-10,"ad":10}}},{"id":"fire_bowl_invite","character":"ad","text":"We're bowl eligible! The Tire Rotation Bowl wants us: noon on a Tuesday, in a city you've never heard of. We'll lose $600,000 on the trip, but every player gets a commemorative tire gauge.","conditions":{"phases":["firingSeason"],"minWins":6},"tags":["bowl"],"left":{"label":"Accept the Tire Rotation Bowl.","effects":{"boosters":-5,"lockerRoom":10,"ad":-5}},"right":{"label":"Decline and rest up.","effects":{"boosters":5,"lockerRoom":-10,"ad":5}}},{"id":"fire_fan_vote","character":"booster","text":"Me and the boys pooled $50 million. We're either paying your buyout or building you an indoor practice facility. We let the fans vote. Buyout is up 61-39.","conditions":{"phases":["firingSeason"],"minSeason":2},"tags":["buyout","booster"],"left":{"label":"Campaign for the facility.","effects":{"boosters":-5,"lockerRoom":5,"media":10,"ad":-10}},"right":{"label":"\"I'll respect either outcome.\"","effects":{"boosters":10,"media":-10}}},{"id":"fire_rival_job","character":"reporter","text":"Sources tell me you interviewed for the {rival} job. Did you? (You did not. But now you're curious.)","conditions":{"phases":["firingSeason"]},"tags":["coaching-carousel","rival"],"left":{"label":"Deny it, loudly.","effects":{"boosters":-5,"lockerRoom":5,"media":-10,"ad":10}},"right":{"label":"\"I don't comment on rumors.\"","effects":{"boosters":5,"lockerRoom":-5,"media":10,"ad":-10}}}]};
+</script>
+<script>
+/* Hot Seat engine: pure JS, no DOM. Mirrors build-plan.md §4–§6 and tools/validate_cards.py.
+   applyChoice(state, 'L'|'R', deck) -> { state, events }. All randomness lives in seeded
+   sfc32 streams stored in the state (deck stream = card order, sim stream = game results). */
+(function (root) {
+  'use strict';
+  var METERS = ['boosters', 'lockerRoom', 'media', 'ad'];
+  var QUOTA = [['offseason', 3], ['recruiting', 3], ['fallCamp', 2], ['gameWeek', 6], ['firingSeason', 2]];
+  var CARDS_PER_SEASON = 16;
+  var COOLDOWN = 12;
+  var GAMES_PER_SEASON = 12;
+  var CONTRACT_YEARS = 5, BIG_CONTRACT_YEARS = 8;
+  var PROGRAM = {
+    id: 'ashgrove', talentBase: 50, expectedWins: 6, opp: [38, 66], rivalStrength: 56, salaryM: 6
+  };
+  // Fictional opponents (cosmetic; names only).
+  var OPPONENTS = [
+    'Lakeshore Normal', 'Cedar Bluff A&M', 'Port Wexley', 'North Fennimore', 'St. Ambrose Tech',
+    'Coldwater Mines', 'Grand Prairie State', 'Marrow Valley', 'Eastbrook Poly', 'Tamarack State',
+    'Fort Dunmore', 'Sable Ridge', 'Kestrel Bay', 'Western Halvorsen', 'Quarry Hill',
+    'Mount Larkin', 'Bramblewood', 'Dusk Harbor', 'Pinecrest Baptist', 'Okemah Plains',
+    'Silver Lantern', 'Redgate College', 'Upper Tolland', 'Wexford Central', 'Briar Point',
+    'Gullwing State', 'Harrow Downs', 'Ironclad Tech', 'Juniper Flats', 'Lowmoor'
+  ];
+
+  /* ---------- RNG: cyrb128 hash -> sfc32 ---------- */
+  function cyrb128(str) {
+    var h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+    for (var i = 0, k; i < str.length; i++) {
+      k = str.charCodeAt(i);
+      h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+      h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+      h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+      h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+    }
+    h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+    h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+    h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+    h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+    h1 ^= (h2 ^ h3 ^ h4); h2 ^= h1; h3 ^= h1; h4 ^= h1;
+    return [h1 >>> 0, h2 >>> 0, h3 >>> 0, h4 >>> 0];
+  }
+  function sfc32(s) { // mutates s (array of 4 uint32), returns [0,1)
+    var a = s[0] | 0, b = s[1] | 0, c = s[2] | 0, d = s[3] | 0;
+    var t = (a + b) | 0;
+    a = b ^ (b >>> 9);
+    b = (c + (c << 3)) | 0;
+    c = (c << 21) | (c >>> 11);
+    d = (d + 1) | 0;
+    t = (t + d) | 0;
+    c = (c + t) | 0;
+    s[0] = a >>> 0; s[1] = b >>> 0; s[2] = c >>> 0; s[3] = d >>> 0;
+    return (t >>> 0) / 4294967296;
+  }
+  function stream(seed) { var s = cyrb128(seed); for (var i = 0; i < 12; i++) sfc32(s); return s; }
+  function uniform(s, lo, hi) { return lo + (hi - lo) * sfc32(s); }
+  function randomSeed() { return 'hs-free-' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1e9).toString(36); }
+
+  /* ---------- daily ---------- */
+  var DAILY_EPOCH = [2026, 10, 4]; // Daily #1 = Sun Oct 4, 2026 (local date)
+  function localDateISO(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dailyNumber(iso) {
+    var p = iso.split('-').map(Number);
+    var a = Date.UTC(p[0], p[1] - 1, p[2]), b = Date.UTC(DAILY_EPOCH[0], DAILY_EPOCH[1] - 1, DAILY_EPOCH[2]);
+    return Math.round((a - b) / 86400000) + 1;
+  }
+  function dailySeed(iso) { return 'hs-daily-' + iso; }
+
+  /* ---------- helpers ---------- */
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+  function has(arr, x) { return arr.indexOf(x) !== -1; }
+  function byId(deck) {
+    if (!deck._byId) { deck._byId = {}; deck.cards.forEach(function (c) { deck._byId[c.id] = c; }); }
+    return deck._byId;
+  }
+  function phaseQuota(phase) { for (var i = 0; i < QUOTA.length; i++) if (QUOTA[i][0] === phase) return QUOTA[i][1]; return 0; }
+  function phaseIndex(phase) { for (var i = 0; i < QUOTA.length; i++) if (QUOTA[i][0] === phase) return i; return -1; }
+  function fmtRecord(w, l) { return w + '\u2013' + l; }
+  function buyoutM(st) { return PROGRAM.salaryM * st.contract.yearsLeft; }
+
+  /* ---------- eligibility & draw ---------- */
+  function eligible(card, st) {
+    var c = card.conditions || {};
+    if (c.phases && !has(c.phases, st.phase)) return false;
+    if (c.requiresFlags && c.requiresFlags.some(function (f) { return !has(st.flags, f); })) return false;
+    if (c.forbidsFlags && c.forbidsFlags.some(function (f) { return has(st.flags, f); })) return false;
+    if (c.minSeason != null && st.season < c.minSeason) return false;
+    if (c.maxSeason != null && st.season > c.maxSeason) return false;
+    if (c.minWins != null && st.wins < c.minWins) return false;
+    if (c.maxWins != null && st.wins > c.maxWins) return false;
+    if (c.programs && !has(c.programs, st.programId)) return false;
+    if (card.once && has(st.seenOnce, card.id)) return false;
+    return true;
+  }
+  function weightedPick(s, pool) {
+    var total = 0, i;
+    for (i = 0; i < pool.length; i++) total += (pool[i].weight == null ? 1 : pool[i].weight);
+    var r = sfc32(s) * total;
+    for (i = 0; i < pool.length; i++) { r -= (pool[i].weight == null ? 1 : pool[i].weight); if (r < 0) return pool[i]; }
+    return pool[pool.length - 1];
+  }
+  function drawCard(st, deck) {
+    var map = byId(deck);
+    // 1) chain follow-ups jump the queue once delay passed and conditions pass
+    var q = st.queue.slice().sort(function (a, b) { return a.notBefore - b.notBefore; });
+    for (var i = 0; i < q.length; i++) {
+      var qc = map[q[i].cardId];
+      if (q[i].notBefore <= st.cardsPlayed && qc && eligible(qc, st)) {
+        st.queue.splice(st.queue.indexOf(q[i]), 1);
+        return qc.id;
+      }
+    }
+    // drop queued once-cards that already played (dead chain entries)
+    st.queue = st.queue.filter(function (e) { var c = map[e.cardId]; return c && !(c.once && has(st.seenOnce, c.id)); });
+    // 2) weighted draw: avoid repeats within the season, then the 12-card cooldown, then anything eligible
+    var pool = deck.cards.filter(function (c) { return !c.chainOnly && eligible(c, st); });
+    if (!pool.length) pool = deck.cards.filter(function (c) { return !c.chainOnly && (!c.conditions || !c.conditions.phases || has(c.conditions.phases, st.phase)); });
+    var recent = st.recent.slice(-COOLDOWN);
+    var fresh = pool.filter(function (c) { return !has(st.seasonSeen, c.id) && !has(recent, c.id); });
+    if (!fresh.length) fresh = pool.filter(function (c) { return !has(st.seasonSeen, c.id); });
+    if (!fresh.length) fresh = pool.filter(function (c) { return !has(recent, c.id); });
+    if (!fresh.length) fresh = pool;
+    return weightedPick(st.rng.deck, fresh).id;
+  }
+
+  /* ---------- run lifecycle ---------- */
+  function schedule(seed, season) {
+    var s = stream(seed + ':sched:' + season);
+    var names = OPPONENTS.slice();
+    for (var i = names.length - 1; i > 0; i--) { var j = Math.floor(sfc32(s) * (i + 1)); var t = names[i]; names[i] = names[j]; names[j] = t; }
+    return names.slice(0, GAMES_PER_SEASON - 1);
+  }
+  function newRun(opts, deck) {
+    opts = opts || {};
+    var mode = opts.mode || 'free';
+    var date = opts.date || localDateISO();
+    var seed = opts.seed || (mode === 'daily' ? dailySeed(date) : randomSeed());
+    var st = {
+      v: 1, mode: mode, seed: seed, programId: PROGRAM.id,
+      daily: mode === 'daily' ? { date: date, n: dailyNumber(date) } : null,
+      rng: { deck: stream(seed + ':deck'), sim: stream(seed + ':sim') },
+      meters: { boosters: 50, lockerRoom: 50, media: 50, ad: 50 },
+      talent: PROGRAM.talentBase,
+      season: 1, phase: 'offseason', phaseIdx: 0,
+      wins: 0, losses: 0, games: [],
+      history: [], flags: [], queue: [], recent: [], seenOnce: [], seasonSeen: [],
+      currentCardId: null, cardsPlayed: 0, log: [],
+      contract: { yearsLeft: CONTRACT_YEARS, salaryM: PROGRAM.salaryM },
+      lastReview: null, bowl: null, ended: null
+    };
+    st.currentCardId = drawCard(st, deck);
+    st.seasonSeen.push(st.currentCardId);
+    return st;
+  }
+
+  function applyEffects(st, effects, scale) {
+    var deltas = {};
+    for (var m in effects) {
+      if (!has(METERS, m)) continue;
+      var before = st.meters[m];
+      st.meters[m] = clamp(before + effects[m] * (scale || 1), 0, 100);
+      deltas[m] = st.meters[m] - before;
+    }
+    return deltas;
+  }
+  function checkEnded(st) {
+    for (var i = 0; i < METERS.length; i++) {
+      var m = METERS[i];
+      if (st.meters[m] <= 0) return m + '_low';
+      if (st.meters[m] >= 100) return m + '_high';
+    }
+    return null;
+  }
+
+  var LOSER_SCORES = [0, 3, 6, 7, 10, 10, 13, 14, 14, 17, 17, 20, 21, 21, 24, 27, 28, 31];
+  var MARGINS = [1, 2, 3, 3, 4, 5, 6, 7, 7, 8, 10, 11, 13, 14, 14, 17, 21, 24, 28, 35];
+  function playGame(st) {
+    var week = st.games.length + 1;
+    var rival = week === GAMES_PER_SEASON;
+    var strength = st.talent + 0.15 * (st.meters.lockerRoom - 50) + 0.05 * (st.meters.boosters - 50);
+    var opp = rival ? PROGRAM.rivalStrength : uniform(st.rng.sim, PROGRAM.opp[0], PROGRAM.opp[1]);
+    var p = 1 / (1 + Math.exp(-(strength - opp) / 8));
+    var win = sfc32(st.rng.sim) < p;
+    var k = rival ? 2 : 1;
+    var deltas = win ? applyEffects(st, { boosters: 2, media: 2, ad: 1 }, k) : applyEffects(st, { boosters: -2, media: -3, ad: -2 }, k);
+    if (win) st.wins++; else st.losses++;
+    // cosmetic score from its own stream so it never perturbs the sim stream
+    var cs = stream(st.seed + ':score:' + st.season + ':' + week);
+    var lo = LOSER_SCORES[Math.floor(sfc32(cs) * LOSER_SCORES.length)];
+    var mg = MARGINS[Math.floor(sfc32(cs) * MARGINS.length)];
+    var oppName = rival ? (st._tokens && st._tokens.rival) || 'Rival' : schedule(st.seed, st.season)[week - 1];
+    var g = { week: week, opp: oppName, rival: rival, win: win, us: win ? lo + mg : lo, them: win ? lo : lo + mg, home: (week % 2) === 1, p: Math.round(p * 100) };
+    st.games.push(g);
+    return { type: 'game', game: g, deltas: deltas, w: st.wins, l: st.losses };
+  }
+
+  function endRun(st, ending, deck, tokens) {
+    var rec = st.games.length ? fmtRecord(st.wins, st.losses)
+      : (st.history.length ? fmtRecord(st.history[st.history.length - 1].w, st.history[st.history.length - 1].l) : fmtRecord(0, 0));
+    var t = Object.assign({}, tokens || {}, { record: rec, buyout: '$' + buyoutM(st) + 'M' });
+    var tpl = (deck.endings && deck.endings[ending]) || 'BREAKING: {coach} fired after {record} season';
+    st.ended = { ending: ending, meter: ending.split('_')[0], dir: ending.split('_')[1], headline: fill(tpl, t), buyoutM: buyoutM(st), seasons: Math.round(st.cardsPlayed / CARDS_PER_SEASON * 10) / 10, record: rec };
+    return { type: 'ended', ended: st.ended };
+  }
+
+  function fill(text, tokens) {
+    return String(text).replace(/\{(\w+)\}/g, function (m, k) { return tokens && tokens[k] != null ? tokens[k] : m; });
+  }
+  function tokensFor(st, deck, extra) {
+    var d = deck.defaults || {};
+    return Object.assign({ school: d.school, mascot: d.mascot, rival: d.rival, conference: d.conference, coach: 'Coach Newsom' },
+      extra || {}, { buyout: '$' + buyoutM(st) + 'M', record: fmtRecord(st.wins, st.losses) });
+  }
+
+  // side: 'L' | 'R'. tokensExtra: e.g. { coach: 'Coach Newsom' }
+  function applyChoice(prev, side, deck, tokensExtra) {
+    var st = clone(prev), events = [], map = byId(deck);
+    if (st.ended) return { state: st, events: events };
+    var tokens = tokensFor(st, deck, tokensExtra);
+    st._tokens = tokens;
+    var card = map[st.currentCardId];
+    var ch = side === 'L' ? card.left : card.right;
+    // 1) the choice
+    events.push({ type: 'effects', deltas: applyEffects(st, ch.effects), cardId: card.id, side: side });
+    if (ch.talent) st.talent += ch.talent;
+    (ch.setFlags || []).forEach(function (f) { if (!has(st.flags, f)) st.flags.push(f); });
+    (ch.clearFlags || []).forEach(function (f) { st.flags = st.flags.filter(function (x) { return x !== f; }); });
+    if (has(ch.setFlags || [], 'big_buyout')) st.contract.yearsLeft = BIG_CONTRACT_YEARS;
+    if (ch.next) st.queue.push({ cardId: ch.next.card, notBefore: st.cardsPlayed + (ch.next.delay || 1) });
+    if ((card.tags || []).indexOf('bowl') !== -1 && side === 'L') st.bowl = 'Tire Rotation Bowl';
+    st.recent.push(card.id); if (st.recent.length > 40) st.recent = st.recent.slice(-40);
+    if (card.once && !has(st.seenOnce, card.id)) st.seenOnce.push(card.id);
+    st.cardsPlayed++; st.log.push(side);
+    var e = checkEnded(st);
+    if (e) { events.push(endRun(st, e, deck, tokens)); delete st._tokens; return { state: st, events: events }; }
+    // 2) game week: two simmed games after each card
+    if (st.phase === 'gameWeek') {
+      for (var g = 0; g < 2; g++) {
+        events.push(playGame(st));
+        e = checkEnded(st);
+        if (e) { events.push(endRun(st, e, deck, tokens)); delete st._tokens; return { state: st, events: events }; }
+      }
+    }
+    // 3) calendar
+    st.phaseIdx++;
+    if (st.phaseIdx >= phaseQuota(st.phase)) {
+      var pi = phaseIndex(st.phase);
+      st.phaseIdx = 0;
+      if (pi === QUOTA.length - 1) {
+        // season end: history, talent regression, contract year burns
+        var rec = { season: st.season, w: st.wins, l: st.losses, results: st.games.map(function (g) { return g.win ? 'W' : 'L'; }).join('') };
+        if (st.bowl) rec.bowl = st.bowl;
+        st.history.push(rec);
+        events.push({ type: 'seasonEnd', season: st.season, w: st.wins, l: st.losses, bowl: st.bowl });
+        st.season++; st.wins = 0; st.losses = 0; st.games = []; st.bowl = null; st.seasonSeen = [];
+        st.talent += 0.25 * (PROGRAM.talentBase - st.talent);
+        st.contract.yearsLeft = Math.max(1, st.contract.yearsLeft - 1);
+        st.phase = 'offseason';
+        events.push({ type: 'phase', season: st.season, phase: st.phase, newSeason: true });
+      } else {
+        st.phase = QUOTA[pi + 1][0];
+        events.push({ type: 'phase', season: st.season, phase: st.phase });
+        if (st.phase === 'firingSeason') {
+          var d = clamp(4 * (st.wins - PROGRAM.expectedWins), -20, 12);
+          var deltas = applyEffects(st, { ad: d, media: d / 2 });
+          st.lastReview = { season: st.season, w: st.wins, l: st.losses, expected: PROGRAM.expectedWins, d: d };
+          events.push({ type: 'adReview', season: st.season, w: st.wins, l: st.losses, expected: PROGRAM.expectedWins, ad: d, media: d / 2, deltas: deltas });
+          e = checkEnded(st);
+          if (e) { events.push(endRun(st, e, deck, tokens)); delete st._tokens; return { state: st, events: events }; }
+        }
+      }
+    }
+    // 4) next card
+    st.currentCardId = drawCard(st, deck);
+    if (!has(st.seasonSeen, st.currentCardId)) st.seasonSeen.push(st.currentCardId);
+    delete st._tokens;
+    return { state: st, events: events };
+  }
+
+  function careerRecord(st) {
+    var w = st.wins, l = st.losses;
+    st.history.forEach(function (h) { w += h.w; l += h.l; });
+    return { w: w, l: l };
+  }
+
+  var api = {
+    METERS: METERS, QUOTA: QUOTA, CARDS_PER_SEASON: CARDS_PER_SEASON, PROGRAM: PROGRAM, GAMES_PER_SEASON: GAMES_PER_SEASON,
+    cyrb128: cyrb128, sfc32: sfc32, stream: stream, localDateISO: localDateISO, dailyNumber: dailyNumber, dailySeed: dailySeed,
+    newRun: newRun, applyChoice: applyChoice, eligible: eligible, fill: fill, tokensFor: tokensFor, fmtRecord: fmtRecord,
+    buyoutM: buyoutM, careerRecord: careerRecord, phaseQuota: phaseQuota, byId: byId
+  };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.HotSeat = api;
+})(this);
+
+</script>
+<script>
+/* Hot Seat UI: DOM layer over HotSeat engine. No dependencies. */
+(function () {
+  'use strict';
+  var HS = window.HotSeat, DECK = window.HOT_SEAT_DECK;
+  var $ = function (id) { return document.getElementById(id); };
+  var METERS = HS.METERS;
+  var MLABEL = { boosters: 'Boosters', lockerRoom: 'Locker Rm', media: 'Media', ad: 'AD' };
+  var MFULL = { boosters: 'Boosters', lockerRoom: 'Locker Room', media: 'Media', ad: 'AD' };
+  var MEMOJI = { boosters: '💰', lockerRoom: '🏈', media: '🎙️', ad: '💼' };
+  var PHASE_NAME = { offseason: 'Offseason', recruiting: 'Recruiting', fallCamp: 'Fall Camp', gameWeek: 'Game Week', firingSeason: 'Firing Season' };
+  var ENDING_NAME = {
+    boosters_low: 'The Fire Fund', boosters_high: 'Spokes-coach', lockerRoom_low: 'Portal exodus', lockerRoom_high: 'Optional practice',
+    media_low: 'Parking-lot siege', media_high: 'Halftime TV job', ad_low: 'Fired for vibes', ad_high: 'Fired by yourself'
+  };
+  var ICON_PATHS = {
+    boosters: '<path d="M8.6 2.2h6.8l-1.9 3.4h-3z"/><path fill-rule="evenodd" d="M12 6.4c-4.9 0-8.3 5-8.3 9.6 0 3.9 3.3 6 8.3 6s8.3-2.1 8.3-6c0-4.6-3.4-9.6-8.3-9.6zm-.9 3.3h1.8v1.1c1.2.2 2.1.8 2.6 1.8l-1.5.8c-.4-.7-1-1-1.9-1-.9 0-1.4.3-1.4.8 0 .6.6.8 1.8 1.1 1.8.4 3.2 1 3.2 2.8 0 1.4-1 2.3-2.8 2.6v1.1h-1.8v-1.1c-1.5-.2-2.6-1-3.1-2.2l1.6-.8c.4.9 1.2 1.4 2.3 1.4 1 0 1.6-.3 1.6-.9 0-.6-.6-.8-1.9-1.1-1.7-.4-3.1-1-3.1-2.7 0-1.3 1-2.2 2.6-2.5z"/>',
+    lockerRoom: '<path fill-rule="evenodd" d="M2.4 14.2C2.4 8.3 6.8 4 12.6 4c4.6 0 8.1 2.9 8.7 7H15v2.1h6.4v1.8h-2.1l-.9 3.6h-2l.9-3.6h-1.8v3.6h-1.9c-.6 1.6-2.2 2.6-4 2.6-4.2 0-7.2-2.9-7.2-6.7zm6.5-2.4a1.7 1.7 0 1 0 0 3.4 1.7 1.7 0 0 0 0-3.4z"/>',
+    media: '<path d="M12 1.8a3.6 3.6 0 0 0-3.6 3.6v6.2a3.6 3.6 0 0 0 7.2 0V5.4A3.6 3.6 0 0 0 12 1.8z"/><path d="M5 11h2a5 5 0 0 0 10 0h2a7 7 0 0 1-6 6.9V20h3.2v2.2H7.8V20H11v-2.1A7 7 0 0 1 5 11z"/>',
+    ad: '<path fill-rule="evenodd" d="M9 2.8h6a2 2 0 0 1 2 2V6h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3V4.8a2 2 0 0 1 2-2zm.2 2V6h5.6V4.8zM2 12.2v1.6h20v-1.6z"/>'
+  };
+  function iconURL(m) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">' + ICON_PATHS[m] + '</svg>';
+    return 'url("data:image/svg+xml;utf8,' + encodeURIComponent(svg) + '")';
+  }
+  function micon(m, pct) {
+    var d = document.createElement('div'); d.className = 'micon';
+    d.style.webkitMaskImage = d.style.maskImage = iconURL(m);
+    var f = document.createElement('div'); f.className = 'fill'; if (pct != null) f.style.height = pct + '%';
+    d.appendChild(f); return d;
+  }
+
+  /* ---------- avatars: generated SVG silhouettes ---------- */
+  var CHAR_COLOR = { booster: '#e9a23b', ad: '#7aa7ff', qb: '#ff6b5a', nil: '#43d1a5', reporter: '#c9b48a', host: '#ff5fa2',
+    president: '#b494ff', oc: '#5fd3ff', rival: '#9ccf3c', parent: '#ffb86b', captain: '#f2d24b', producer: '#ff8f5a' };
+  function hashColor(k) { var h = 0; for (var i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0; return 'hsl(' + (h % 360) + ',70%,62%)'; }
+  function initials(name) {
+    var parts = name.replace(/"[^"]*"/g, '').replace(/^(Dr\.|President)\s+/, '').split(/[\s-]+/).filter(Boolean);
+    return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+  }
+  function avatarSVG(key) {
+    var ch = DECK.characters[key] || { name: key, silhouette: '' };
+    var col = CHAR_COLOR[key] || hashColor(key), S = '#0e1428', A = '#ffffff';
+    var sil = ch.silhouette || '';
+    var shoulders = sil === 'lineman' ? 'M6 120c2-30 22-42 54-42s52 12 54 42z' : 'M18 120c2-24 20-36 42-36s40 12 42 36z';
+    var neck = sil === 'lineman' ? '<rect x="44" y="66" width="32" height="20" rx="8" fill="' + S + '"/>' : '<rect x="52" y="66" width="16" height="20" rx="6" fill="' + S + '"/>';
+    var acc = '';
+    switch (sil) {
+      case 'cowboy-hat': acc = '<ellipse cx="60" cy="36" rx="36" ry="7" fill="' + S + '"/><path d="M40 37c0-15 6-23 20-23s20 8 20 23z" fill="' + S + '"/><rect x="40" y="30" width="40" height="5" fill="' + col + '" opacity=".9"/>'; break;
+      case 'blazer-clipboard': acc = '<path d="M46 90l14 20 14-20" stroke="' + A + '" stroke-width="4" fill="none"/><rect x="78" y="86" width="22" height="28" rx="3" fill="' + A + '"/><rect x="84" y="83" width="10" height="6" rx="2" fill="' + S + '"/><path d="M82 96h14M82 102h14M82 108h9" stroke="' + S + '" stroke-width="2"/>'; break;
+      case 'helmet-under-arm': acc = '<circle cx="94" cy="102" r="17" fill="' + A + '"/><path d="M98 98h14M98 106h14M104 96v14" stroke="' + S + '" stroke-width="3"/><rect x="77" y="98" width="10" height="6" fill="' + col + '"/>'; break;
+      case 'quarter-zip-phone': acc = '<path d="M60 84v26" stroke="' + A + '" stroke-width="3"/><path d="M50 84l10 6 10-6" stroke="' + A + '" stroke-width="3" fill="none"/><rect x="78" y="38" width="11" height="22" rx="3" fill="' + A + '" transform="rotate(12 83 49)"/>'; break;
+      case 'notepad-glasses': acc = '<circle cx="51" cy="52" r="7" stroke="' + A + '" stroke-width="3" fill="none"/><circle cx="69" cy="52" r="7" stroke="' + A + '" stroke-width="3" fill="none"/><path d="M58 52h4" stroke="' + A + '" stroke-width="3"/><rect x="18" y="92" width="20" height="24" rx="2" fill="' + A + '"/><path d="M22 99h12M22 105h12" stroke="' + S + '" stroke-width="2"/>'; break;
+      case 'headphones-pointing': acc = '<path d="M34 56a26 26 0 0 1 52 0" stroke="' + A + '" stroke-width="5" fill="none"/><rect x="29" y="48" width="11" height="18" rx="5" fill="' + A + '"/><rect x="80" y="48" width="11" height="18" rx="5" fill="' + A + '"/>'; break;
+      case 'pearls-podium': acc = '<g fill="' + A + '"><circle cx="48" cy="88" r="3"/><circle cx="54" cy="92" r="3"/><circle cx="60" cy="93" r="3"/><circle cx="66" cy="92" r="3"/><circle cx="72" cy="88" r="3"/></g><path d="M30 104h60l-6 16H36z" fill="' + A + '"/><circle cx="60" cy="111" r="4" fill="' + col + '"/>'; break;
+      case 'visor-laptop': acc = '<path d="M36 42h46l12 6H40z" fill="' + A + '"/><rect x="34" y="96" width="52" height="24" rx="3" fill="' + A + '"/><circle cx="60" cy="108" r="4" fill="' + col + '"/>'; break;
+      case 'whistle-smirk': acc = '<path d="M50 84l10 18 10-18" stroke="' + A + '" stroke-width="2" fill="none"/><rect x="54" y="100" width="14" height="9" rx="4" fill="' + A + '"/><path d="M54 61q8 5 14-2" stroke="' + col + '" stroke-width="3" fill="none" stroke-linecap="round"/>'; break;
+      case 'polo-sunglasses': acc = '<rect x="40" y="46" width="40" height="9" rx="4" fill="' + A + '"/><path d="M44 84l10 12 6-8 6 8 10-12" fill="' + A + '"/>'; break;
+      case 'lineman': acc = '<path d="M44 54h10M66 54h10" stroke="' + A + '" stroke-width="4" stroke-linecap="round"/><path d="M30 96h60" stroke="' + A + '" stroke-width="3" opacity=".5"/>'; break;
+      case 'headset-stopwatch': acc = '<path d="M36 52a24 24 0 0 1 48 0" stroke="' + A + '" stroke-width="4" fill="none"/><rect x="31" y="47" width="9" height="14" rx="4" fill="' + A + '"/><path d="M36 60q4 12 16 10" stroke="' + A + '" stroke-width="3" fill="none"/><circle cx="92" cy="104" r="11" fill="' + A + '"/><path d="M92 104v-6M92 89v4" stroke="' + S + '" stroke-width="3"/>'; break;
+    }
+    var ini = initials(ch.name);
+    return '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + ch.name.replace(/"/g, '') + '">' +
+      '<defs><radialGradient id="g' + key + '" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="' + col + '"/><stop offset="1" stop-color="' + col + '" stop-opacity=".55"/></radialGradient></defs>' +
+      '<rect width="120" height="120" fill="#1a2140"/><rect width="120" height="120" fill="url(#g' + key + ')"/>' +
+      '<path d="' + shoulders + '" fill="' + S + '"/>' + neck + '<circle cx="60" cy="52" r="' + (sil === 'lineman' ? 23 : 21) + '" fill="' + S + '"/>' + acc +
+      '<g><rect x="43" y="97" width="34" height="19" rx="9.5" fill="#fff" opacity=".92"/><text x="60" y="111" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="800" font-size="13" fill="#0e1428">' + ini + '</text></g></svg>';
+  }
+
+  /* ---------- storage ---------- */
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode / file:// on some browsers */ } },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  var RUN_KEY = 'hotseat.run.v1', PROFILE_KEY = 'hotseat.profile.v1';
+  function defaultProfile() {
+    return { playerId: (crypto && crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2)), runsStarted: 0, runsFinished: 0,
+      best: null, endingsSeen: [], daily: {}, totalCards: 0, totalWins: 0, totalLosses: 0,
+      settings: { haptics: true, reducedMotion: false, coach: 'Coach Newsom' } };
+  }
+  var profile = Object.assign(defaultProfile(), store.get(PROFILE_KEY, {}));
+  profile.settings = Object.assign(defaultProfile().settings, profile.settings || {});
+  function saveProfile() { store.set(PROFILE_KEY, profile); }
+  var run = store.get(RUN_KEY, null);
+  if (run && (run.v !== 1 || !HS.byId(DECK)[run.currentCardId])) run = null;
+  function saveRun() { if (run && !run.ended) store.set(RUN_KEY, run); else store.del(RUN_KEY); }
+
+  function tokens() { return HS.tokensFor(run || HS.newRun({ seed: 'x' }, DECK), DECK, { coach: profile.settings.coach || 'Coach Newsom' }); }
+  function fill(t) { return HS.fill(t, tokens()); }
+
+  /* ---------- haptics ---------- */
+  function buzz(p) { if (!profile.settings.haptics) return; try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+
+  /* ---------- tabs ---------- */
+  var currentTab = 'play';
+  function showTab(name) {
+    currentTab = name;
+    document.querySelectorAll('.tabbtn').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); b.setAttribute('aria-selected', b.dataset.tab === name); });
+    document.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('active', t.id === 'tab-' + name); });
+    if (name === 'daily') renderDaily();
+    if (name === 'stats') renderStats();
+    if (name === 'play') renderPlay();
+  }
+  document.querySelectorAll('.tabbtn').forEach(function (b) { b.addEventListener('click', function () { buzz(5); showTab(b.dataset.tab); }); });
+
+  /* ---------- meters ---------- */
+  var meterEls = {};
+  (function buildMeters() {
+    var wrap = $('meters');
+    METERS.forEach(function (m) {
+      var el = document.createElement('div'); el.className = 'meter'; el.setAttribute('aria-label', MFULL[m]);
+      var dot = document.createElement('div'); dot.className = 'dot';
+      var ic = micon(m, 50);
+      var lb = document.createElement('div'); lb.className = 'mlabel'; lb.textContent = MLABEL[m];
+      el.appendChild(dot); el.appendChild(ic); el.appendChild(lb); wrap.appendChild(el);
+      meterEls[m] = { el: el, dot: dot, fill: ic.querySelector('.fill') };
+    });
+  })();
+  function renderMeters(vals, bump) {
+    METERS.forEach(function (m) {
+      var v = Math.max(0, Math.min(100, vals[m]));
+      var e = meterEls[m];
+      e.fill.style.height = v + '%';
+      e.el.classList.toggle('danger', v <= 15 || v >= 85);
+      e.el.setAttribute('aria-label', MFULL[m] + ' ' + Math.round(v));
+      if (bump && bump[m]) { e.el.classList.remove('bump'); void e.el.offsetWidth; e.el.classList.add('bump'); }
+    });
+  }
+  function setPreview(side) {
+    var card = run && !run.ended ? HS.byId(DECK)[run.currentCardId] : null;
+    var eff = card && side ? (side === 'L' ? card.left : card.right).effects : {};
+    METERS.forEach(function (m) {
+      var d = meterEls[m].dot, v = Math.abs(eff[m] || 0);
+      d.className = 'dot' + (v ? ' on ' + (v <= 5 ? 's1' : v <= 10 ? 's2' : 's3') : '');
+    });
+    $('btn-left').classList.toggle('hot', side === 'L');
+    $('btn-right').classList.toggle('hot', side === 'R');
+  }
+
+  /* ---------- status / ticker ---------- */
+  var NEWS = [
+    'TAKE ZONE caller demands coach be fired "preemptively"', 'Ransome Truck World: zero down, zero dignity, this weekend only',
+    'The Mega 20 adds three more schools; map now "mostly ocean"', 'Gold Standard Collective launches NFT of the 50-yard line',
+    'Analytics intern\'s DOOMBOT gains 4,000 followers overnight', 'Tire Rotation Bowl announces title sponsor: a different tire company',
+    'Local man has opinions about the 4-3 defense', 'Board of Regents approves $90M lazy river phase II'
+  ];
+  function renderStatus() {
+    if (!run) return;
+    $('st-year').textContent = 'YR ' + run.season;
+    $('st-phase').textContent = PHASE_NAME[run.phase];
+    var q = HS.phaseQuota(run.phase), pips = '';
+    for (var i = 0; i < q; i++) pips += '<i class="' + (i < run.phaseIdx ? 'done' : i === run.phaseIdx ? 'now' : '') + '"></i>';
+    $('st-pips').innerHTML = pips;
+    $('st-record').textContent = HS.fmtRecord(run.wins, run.losses);
+  }
+  function setTicker(html, tag, cls) {
+    var t = $('ticker');
+    t.querySelector('.ticker-tag').textContent = tag || 'NEWS';
+    t.querySelector('.ticker-tag').className = 'ticker-tag' + (cls ? ' ' + cls : '');
+    $('ticker-body').innerHTML = html;
+    t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash');
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function gameLine(g) {
+    return '<span class="' + (g.win ? 'w' : 'l') + '">' + (g.win ? 'W' : 'L') + ' ' + g.us + '\u2013' + g.them + '</span> ' +
+      (g.home ? 'vs ' : '@ ') + esc(g.opp) + (g.rival ? ' (RIVALRY)' : '');
+  }
+  function idleTicker() {
+    if (!run) return;
+    if (run.games.length) {
+      var gs = run.games.slice(-2);
+      setTicker(gs.map(function (g) { return 'WK' + g.week + ' ' + gameLine(g); }).join(' &nbsp;·&nbsp; '), 'FINAL', 'final');
+    } else {
+      setTicker(esc(NEWS[(run.cardsPlayed + run.season) % NEWS.length]), 'NEWS');
+    }
+  }
+
+  /* ---------- card ---------- */
+  var cardEl = $('card');
+  function renderCard(animate) {
+    if (!run) return;
+    var c = HS.byId(DECK)[run.currentCardId];
+    var ch = DECK.characters[c.character];
+    $('card-avatar').innerHTML = avatarSVG(c.character);
+    $('card-name').textContent = fill(ch.name);
+    $('card-role').textContent = fill(ch.role);
+    $('card-text').textContent = fill(c.text);
+    $('lbl-left').textContent = fill(c.left.label);
+    $('lbl-right').textContent = fill(c.right.label);
+    var chain = (c.tags || []).filter(function (t) { return t.indexOf('chain:') === 0; })[0];
+    $('card-chain').textContent = c.chainOnly ? '↻ It\'s back' : (chain ? '' : '');
+    $('choice-tag').style.opacity = 0;
+    cardEl.style.transform = ''; cardEl.style.opacity = '';
+    cardEl.classList.remove('fly', 'snap', 'enter');
+    if (animate) { void cardEl.offsetWidth; cardEl.classList.add('enter'); }
+    setPreview(null);
+  }
+
+  /* drag */
+  var drag = null, busy = false;
+  var THRESH = function () { return Math.min(110, cardEl.offsetWidth * 0.28); };
+  function setDrag(dx) {
+    cardEl.style.transform = 'translateX(' + dx + 'px) rotate(' + (dx / 22) + 'deg)';
+    var side = dx < -14 ? 'L' : dx > 14 ? 'R' : null;
+    var tag = $('choice-tag');
+    if (side) {
+      var c = HS.byId(DECK)[run.currentCardId];
+      var label = fill((side === 'L' ? c.left : c.right).label);
+      if (tag.dataset.side !== side) { tag.textContent = label; tag.className = 'choice-tag ' + side.toLowerCase(); tag.dataset.side = side; }
+      tag.style.opacity = Math.min(1, (Math.abs(dx) - 14) / 26);
+    } else { tag.style.opacity = 0; tag.dataset.side = ''; }
+    setPreview(side);
+    var over = Math.abs(dx) > THRESH();
+    if (drag && over !== drag.over) { drag.over = over; if (over) buzz(6); }
+  }
+  cardEl.addEventListener('pointerdown', function (e) {
+    if (busy || !run || run.ended || (e.button != null && e.button > 0)) return;
+    drag = { x: e.clientX, y: e.clientY, dx: 0, id: e.pointerId, over: false };
+    cardEl.classList.remove('snap', 'enter');
+    try { cardEl.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  cardEl.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag.dx = e.clientX - drag.x; setDrag(drag.dx); e.preventDefault();
+  });
+  function endDrag(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    var dx = drag.dx; drag = null;
+    if (Math.abs(dx) > THRESH()) commit(dx < 0 ? 'L' : 'R', dx);
+    else { cardEl.classList.add('snap'); cardEl.style.transform = ''; $('choice-tag').style.opacity = 0; setPreview(null); }
+  }
+  cardEl.addEventListener('pointerup', endDrag);
+  cardEl.addEventListener('pointercancel', endDrag);
+  ['L', 'R'].forEach(function (s) {
+    var b = $(s === 'L' ? 'btn-left' : 'btn-right');
+    b.addEventListener('mouseenter', function () { if (!busy && !drag) setPreview(s); });
+    b.addEventListener('mouseleave', function () { if (!busy && !drag) setPreview(null); });
+    b.addEventListener('focus', function () { if (!busy) setPreview(s); });
+    b.addEventListener('blur', function () { if (!busy) setPreview(null); });
+    b.addEventListener('click', function () { commit(s); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.target && e.target.tagName === 'INPUT') return;
+    if ($('sheet-wrap').classList.contains('open')) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); closeSheet(); } return; }
+    if (currentTab !== 'play' || $('game').classList.contains('hidden') || $('fired').classList.contains('open')) return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); commit('L'); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); commit('R'); }
+  });
+
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, reduced() ? Math.min(ms, 30) : ms); }); }
+  function reduced() { return profile.settings.reducedMotion || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+
+  function banner(title, sub) {
+    var b = $('banner'); b.innerHTML = esc(title) + (sub ? '<small>' + esc(sub) + '</small>' : '');
+    b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+  }
+
+  async function commit(side, fromDx) {
+    if (busy || !run || run.ended) return;
+    busy = true; drag = null;
+    $('btn-left').disabled = $('btn-right').disabled = true;
+    buzz(12);
+    // fly out
+    var c = HS.byId(DECK)[run.currentCardId];
+    if (fromDx == null) { setDrag(side === 'L' ? -60 : 60); await wait(90); }
+    cardEl.classList.remove('snap'); cardEl.classList.add('fly');
+    var w = window.innerWidth;
+    cardEl.style.transform = 'translateX(' + (side === 'L' ? -w : w) + 'px) rotate(' + (side === 'L' ? -28 : 28) + 'deg)';
+    cardEl.style.opacity = '0';
+    setPreview(null);
+    var res = HS.applyChoice(run, side, DECK, { coach: profile.settings.coach || 'Coach Newsom' });
+    var prevMeters = Object.assign({}, run.meters);
+    run = res.state;
+    var events = res.events;
+    var review = events.filter(function (e) { return e.type === 'adReview'; })[0];
+    var ended = events.filter(function (e) { return e.type === 'ended'; })[0];
+    var games = events.filter(function (e) { return e.type === 'game'; });
+    var phaseEv = events.filter(function (e) { return e.type === 'phase'; })[0];
+    var seasonEnd = events.filter(function (e) { return e.type === 'seasonEnd'; })[0];
+    // meters before the AD review (so the review visibly moves them)
+    var shown = Object.assign({}, run.meters);
+    if (review) { for (var m in review.deltas) shown[m] -= review.deltas[m]; }
+    var bump = {}; METERS.forEach(function (m) { bump[m] = Math.round(shown[m]) !== Math.round(prevMeters[m]); });
+    await wait(200);
+    renderMeters(shown, bump);
+    renderStatus();
+    saveRun();
+    // games: ticker + record flash
+    for (var i = 0; i < games.length; i++) {
+      var g = games[i].game;
+      setTicker('WK' + g.week + ' ' + gameLine(g), 'FINAL', 'final');
+      var rc = $('st-record'); rc.textContent = HS.fmtRecord(games[i].w, games[i].l);
+      rc.classList.remove('win', 'loss'); void rc.offsetWidth; rc.classList.add(g.win ? 'win' : 'loss');
+      buzz(g.win ? [8, 40, 8] : 20);
+      await wait(games.length > 1 ? 650 : 400);
+    }
+    if (games.length) { setTimeout(function () { $('st-record').classList.remove('win', 'loss'); }, 900); idleTicker(); }
+    if (review) {
+      renderCard(true); // next card waits behind the sheet
+      await showReview(review);
+      renderMeters(run.meters, { ad: true, media: true });
+      await wait(250);
+    }
+    if (ended) {
+      await wait(450);
+      buzz([80, 60, 180]);
+      finishRun();
+      showFired();
+      busy = false;
+      return;
+    }
+    if (seasonEnd) {
+      toast('Year ' + seasonEnd.season + ' final: ' + HS.fmtRecord(seasonEnd.w, seasonEnd.l) + (seasonEnd.bowl ? ' · ' + seasonEnd.bowl : ''));
+    }
+    if (phaseEv) {
+      if (phaseEv.newSeason) banner('Year ' + phaseEv.season, run.contract.yearsLeft + ' yr' + (run.contract.yearsLeft > 1 ? 's' : '') + ' left · buyout $' + HS.buyoutM(run) + 'M');
+      else banner(PHASE_NAME[phaseEv.phase], phaseEv.phase === 'gameWeek' ? '12 games · last one is the rival' : phaseEv.phase === 'firingSeason' ? 'Pray' : '');
+      if (!games.length) idleTicker();
+    } else if (!games.length && run.cardsPlayed % 3 === 0) idleTicker();
+    renderStatus();
+    if (!review) renderCard(true);
+    await wait(120);
+    busy = false;
+    $('btn-left').disabled = $('btn-right').disabled = false;
+  }
+
+  /* ---------- AD review sheet ---------- */
+  var sheetResolve = null;
+  function openSheet(html) {
+    $('sheet').innerHTML = html;
+    $('sheet-wrap').classList.add('open'); $('sheet-wrap').setAttribute('aria-hidden', 'false');
+    return new Promise(function (r) {
+      sheetResolve = r;
+      var b = $('sheet').querySelector('[data-close]'); if (b) { b.addEventListener('click', closeSheet); setTimeout(function () { b.focus(); }, 50); }
+    });
+  }
+  function closeSheet() {
+    $('sheet-wrap').classList.remove('open'); $('sheet-wrap').setAttribute('aria-hidden', 'true');
+    var r = sheetResolve; sheetResolve = null; if (r) setTimeout(r, reduced() ? 0 : 260);
+  }
+  function deltaChip(m, v) {
+    var tmp = document.createElement('div'); tmp.appendChild(micon(m, 100));
+    return '<div class="delta ' + (v >= 0 ? 'up' : 'down') + '">' + tmp.innerHTML + (v >= 0 ? '+' : '\u2212') + Math.abs(v) + '</div>';
+  }
+  function showReview(ev) {
+    var diff = ev.w - ev.expected;
+    var quote = diff >= 3 ? 'We expected ' + ev.expected + ' wins. You got ' + ev.w + '. The board is thrilled, which is how I know next year they\'ll expect ' + (ev.w + 1) + '.'
+      : diff > 0 ? 'Above expectations. I\'ve told the board you\'re "trending." Don\'t make me regret a word I barely committed to.'
+      : diff === 0 ? 'Exactly ' + ev.expected + ' wins. Exactly what we projected. Nobody is excited, which, in this building, is a compliment.'
+      : diff >= -2 ? 'Below expectations. I\'m giving you my full support, which you should read as a countdown.'
+      : 'We expected ' + ev.expected + '. You won ' + ev.w + '. The board asked me to run the buyout numbers "just for fun."';
+    var res = run.games.map(function (g) { return '<i class="' + (g.win ? 'W' : 'L') + (g.rival ? ' R' : '') + '">' + (g.win ? 'W' : 'L') + '</i>'; }).join('');
+    return openSheet('<div class="kicker">Year ' + ev.season + ' · End-of-season review</div>' +
+      '<div class="bigrec">' + HS.fmtRecord(ev.w, ev.l) + '<small>EXPECTED ' + ev.expected + ' W</small></div>' +
+      '<div class="results-row">' + res + '</div>' +
+      '<div class="quote"><div class="avatar">' + avatarSVG('ad') + '</div><div><b>' + esc(DECK.characters.ad.name) + '</b><br>' + esc(quote) + '</div></div>' +
+      '<div class="deltas">' + (ev.ad ? deltaChip('ad', ev.ad) : '') + (ev.media ? deltaChip('media', ev.media) : '') + (!ev.ad && !ev.media ? '<div class="delta">No change</div>' : '') + '</div>' +
+      '<button class="btn btn-primary btn-xl" data-close><span>On to firing season</span></button>');
+  }
+
+  /* ---------- run start / end ---------- */
+  function startRun(mode) {
+    var date = HS.localDateISO();
+    run = HS.newRun({ mode: mode, date: date }, DECK);
+    run.practice = mode === 'daily' && !!profile.daily[date];
+    profile.runsStarted++; saveProfile(); saveRun();
+    hideFired();
+    showTab('play');
+    enterGame();
+    banner(mode === 'daily' ? 'Daily #' + run.daily.n : 'Year 1', mode === 'daily' ? (run.practice ? 'Practice run' : 'Scored run') : HS.fill(DECK.defaults.school + ' ' + DECK.defaults.mascot + 's', {}));
+  }
+  function enterGame() {
+    $('home').classList.add('hidden'); $('game').classList.remove('hidden');
+    renderMeters(run.meters); renderStatus(); idleTicker(); renderCard(true);
+    busy = false; $('btn-left').disabled = $('btn-right').disabled = false;
+  }
+  function finishRun() {
+    var e = run.ended, cr = HS.careerRecord(run);
+    profile.runsFinished++;
+    profile.totalCards += run.cardsPlayed; profile.totalWins += cr.w; profile.totalLosses += cr.l;
+    if (profile.endingsSeen.indexOf(e.ending) === -1) profile.endingsSeen.push(e.ending);
+    var score = { cards: run.cardsPlayed, seasons: e.seasons, w: cr.w, l: cr.l, ending: e.ending, mode: run.mode, date: HS.localDateISO() };
+    run.newBest = !profile.best || score.cards > profile.best.cards || (score.cards === profile.best.cards && score.w > profile.best.w);
+    if (run.newBest) profile.best = score;
+    if (run.mode === 'daily' && !run.practice && !profile.daily[run.daily.date]) profile.daily[run.daily.date] = { cards: run.cardsPlayed, seasons: e.seasons, ending: e.ending, w: cr.w, l: cr.l };
+    saveProfile(); store.del(RUN_KEY);
+  }
+
+  /* ---------- fired screen ---------- */
+  function seasonsList() {
+    var rows = run.history.map(function (h) { return { y: h.season, r: h.results || '', w: h.w, l: h.l, bowl: h.bowl }; });
+    if (run.games.length || !rows.length) rows.push({ y: run.season, r: run.games.map(function (g) { return g.win ? 'W' : 'L'; }).join(''), w: run.wins, l: run.losses, partial: true });
+    return rows;
+  }
+  function showFired() {
+    var e = run.ended, cr = HS.careerRecord(run);
+    $('fired-headline').textContent = e.headline;
+    var cause = document.createElement('div'); cause.appendChild(micon(e.meter, e.dir === 'high' ? 100 : 4));
+    $('fired-cause').innerHTML = cause.innerHTML + '<span>' + MFULL[e.meter] + ' hit ' + (e.dir === 'high' ? '100' : '0') + ' · ' + ENDING_NAME[e.ending] + '</span>';
+    $('fired-stats').innerHTML = [[e.seasons.toFixed(1), 'Seasons'], [HS.fmtRecord(cr.w, cr.l), 'Record'], [run.cardsPlayed, 'Cards'], ['$' + e.buyoutM + 'M', 'Buyout']]
+      .map(function (s) { return '<div class="fs"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join('');
+    $('fired-seasons').innerHTML = seasonsList().map(function (s) {
+      return '<div class="srow"><b>Y' + s.y + '</b><div class="results-row">' + s.r.split('').map(function (x) { return '<i class="' + x + '"></i>'; }).join('') +
+        '</div><span>' + HS.fmtRecord(s.w, s.l) + (s.bowl ? ' · Bowl' : '') + (s.partial && s.r.length < 12 ? ' (in progress)' : '') + '</span></div>';
+    }).join('');
+    var badge = '';
+    if (run.mode === 'daily') badge = '<span class="' + (run.practice ? 'muted' : '') + '">Daily #' + run.daily.n + (run.practice ? ' · practice' : ' · scored') + '</span> ';
+    if (run.newBest) badge += '<span>New best run</span>';
+    $('fired-badge').innerHTML = badge;
+    $('fired-crawl').textContent = [e.headline.replace(/^BREAKING:\s*/, ''), 'Search firm "already has a shortlist"', 'TAKE ZONE declares victory',
+      'Buck Ransome: "I never liked him" (said the same about the last six)', 'Ashgrove State AD: "We wish him well in his next buyout"'].join('   ✦   ');
+    $('btn-share').classList.toggle('hidden', !navigator.share);
+    $('fired').classList.add('open'); $('fired').setAttribute('aria-hidden', 'false');
+    $('fired').querySelector('.fired-scroll').scrollTop = 0;
+  }
+  function hideFired() { $('fired').classList.remove('open'); $('fired').setAttribute('aria-hidden', 'true'); }
+
+  function shareText() {
+    var e = run.ended, cr = HS.careerRecord(run);
+    var band = function (v) { return v <= 0 || v >= 100 ? '💥' : (v < 20 || v > 80) ? '🟥' : (v < 35 || v > 65) ? '🟨' : '🟩'; };
+    var lines = [];
+    lines.push('🔥 HOT SEAT' + (run.mode === 'daily' ? ' · Daily #' + run.daily.n + (run.practice ? ' (practice)' : '') : ''));
+    lines.push('Fired after ' + e.seasons.toFixed(1) + ' seasons · ' + run.cardsPlayed + ' cards · ' + HS.fmtRecord(cr.w, cr.l));
+    seasonsList().forEach(function (s) { lines.push('Y' + s.y + ' ' + (s.r ? s.r.split('').map(function (x) { return x === 'W' ? '🟩' : '🟥'; }).join('') : '⬛') + ' ' + HS.fmtRecord(s.w, s.l)); });
+    lines.push(METERS.map(function (m) { return MEMOJI[m] + band(run.meters[m]); }).join(' '));
+    lines.push('📰 ' + ENDING_NAME[e.ending]);
+    lines.push('How long would you last?');
+    return lines.join('\n');
+  }
+  function copyText(t) {
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = t; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); return ok;
+    }
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t).then(function () { return true; }, function () { return fallback(); });
+    return Promise.resolve(fallback());
+  }
+  $('btn-copy').addEventListener('click', function () {
+    var t = shareText(); window.__lastShare = t;
+    copyText(t).then(function (ok) { toast(ok ? 'Copied! Paste it in the group chat.' : 'Copy failed. Long-press to select.'); buzz(10); });
+  });
+  $('btn-share').addEventListener('click', function () { if (navigator.share) navigator.share({ text: shareText() }).catch(function () {}); });
+  $('btn-again').addEventListener('click', function () { startRun('free'); });
+  $('btn-daily-fired').addEventListener('click', function () { startRun('daily'); });
+  $('btn-home').addEventListener('click', function () { hideFired(); run = null; showTab('play'); });
+
+  /* ---------- toast ---------- */
+  var toastT = null;
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2200); }
+
+  /* ---------- home / daily / stats ---------- */
+  function todayInfo() { var d = HS.localDateISO(); return { date: d, n: HS.dailyNumber(d), played: profile.daily[d] }; }
+  function niceDate(iso, opts) { var p = iso.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(undefined, opts || { weekday: 'short', month: 'short', day: 'numeric' }); }
+  function renderPlay() {
+    if (run && !run.ended && !$('game').classList.contains('hidden')) return;
+    $('home').classList.remove('hidden'); $('game').classList.add('hidden');
+    var t = todayInfo();
+    var hasRun = run && !run.ended;
+    $('btn-continue').classList.toggle('hidden', !hasRun);
+    if (hasRun) $('continue-sub').textContent = (run.mode === 'daily' ? 'Daily #' + run.daily.n + ' · ' : '') + 'Year ' + run.season + ' · ' + PHASE_NAME[run.phase] + ' · ' + HS.fmtRecord(run.wins, run.losses);
+    $('btn-play').querySelector('span').textContent = hasRun ? 'New career' : 'Play';
+    $('daily-home-label').textContent = 'Daily #' + t.n;
+    $('daily-home-sub').textContent = t.played ? 'Done: ' + t.played.cards + ' cards · replay as practice' : 'Same deck for everyone today';
+    $('home-best').innerHTML = profile.best ? 'Best run: <b>' + profile.best.seasons.toFixed(1) + ' seasons</b> · ' + profile.best.cards + ' cards · ' + HS.fmtRecord(profile.best.w, profile.best.l) : 'No firings yet. Give it time.';
+  }
+  function renderDaily() {
+    var t = todayInfo();
+    $('daily-num').textContent = 'Daily #' + t.n;
+    $('daily-date').textContent = niceDate(t.date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    $('daily-status').innerHTML = t.played
+      ? 'Today\'s scored run<br><b>' + t.played.cards + ' cards · ' + t.played.seasons.toFixed(1) + ' seasons · ' + HS.fmtRecord(t.played.w, t.played.l) + '</b><br>Fired by: ' + ENDING_NAME[t.played.ending]
+      : 'You haven\'t played today. <b>One scored attempt.</b>';
+    $('btn-daily').querySelector('span').textContent = t.played ? 'Practice again' : 'Play Daily #' + t.n;
+    $('daily-btn-sub').textContent = run && !run.ended ? 'Replaces your current run' : 'Seeded: hs-daily-' + t.date;
+    var now = new Date(), mid = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    var mins = Math.round((mid - now) / 60000);
+    $('daily-next').textContent = 'Next daily in ' + Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+    var html = '';
+    for (var i = 6; i >= 0; i--) {
+      var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i), iso = HS.localDateISO(d), r = profile.daily[iso];
+      html += '<div class="dw' + (i === 0 ? ' today' : '') + (r ? ' played' : '') + '"><span>' + d.toLocaleDateString(undefined, { weekday: 'narrow' }) + '</span><b>' + (r ? r.cards : '–') + '</b><span>' + (r ? 'cards' : '') + '</span></div>';
+    }
+    $('daily-week').innerHTML = html;
+  }
+  function renderStats() {
+    var b = profile.best;
+    var stats = [[b ? b.seasons.toFixed(1) : '–', 'Best (seasons)'], [b ? b.cards : '–', 'Best (cards)'], [profile.runsFinished, 'Times fired'],
+      [profile.totalWins + profile.totalLosses ? HS.fmtRecord(profile.totalWins, profile.totalLosses) : '–', 'Career record']];
+    $('stat-grid').innerHTML = stats.map(function (s) { return '<div class="stat"><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join('');
+    var keys = Object.keys(ENDING_NAME);
+    $('endings-count').textContent = '(' + profile.endingsSeen.length + '/8)';
+    $('endings').innerHTML = keys.map(function (k) {
+      var got = profile.endingsSeen.indexOf(k) !== -1, m = k.split('_')[0];
+      var tmp = document.createElement('div'); tmp.appendChild(micon(m, k.split('_')[1] === 'high' ? 100 : 8));
+      return '<div class="ending' + (got ? ' got' : '') + '">' + tmp.innerHTML + '<div>' + (got ? ENDING_NAME[k] : '???') + '<span class="mini">' + MFULL[m] + ' ' + (k.split('_')[1] === 'high' ? '100' : '0') + '</span></div></div>';
+    }).join('');
+    $('set-coach').value = profile.settings.coach;
+    $('set-haptics').checked = !!profile.settings.haptics;
+    $('set-motion').checked = !!profile.settings.reducedMotion;
+  }
+  $('set-coach').addEventListener('change', function () { profile.settings.coach = this.value.trim() || 'Coach Newsom'; saveProfile(); });
+  $('set-haptics').addEventListener('change', function () { profile.settings.haptics = this.checked; saveProfile(); buzz(15); });
+  $('set-motion').addEventListener('change', function () { profile.settings.reducedMotion = this.checked; document.documentElement.classList.toggle('reduce-motion', this.checked); saveProfile(); });
+  $('btn-reset').addEventListener('click', function () {
+    if (!confirm('Reset all stats and daily history on this device?')) return;
+    var s = profile.settings; profile = defaultProfile(); profile.settings = s; saveProfile(); renderStats(); toast('Stats reset');
+  });
+  $('btn-play').addEventListener('click', function () { startRun('free'); });
+  $('btn-continue').addEventListener('click', function () { enterGame(); });
+  $('btn-daily-home').addEventListener('click', function () { startRun('daily'); });
+  $('btn-daily').addEventListener('click', function () { startRun('daily'); });
+
+  /* ---------- boot ---------- */
+  document.documentElement.classList.toggle('reduce-motion', !!profile.settings.reducedMotion);
+  // stop iOS rubber-banding / double-tap zoom outside scroll areas
+  document.addEventListener('touchmove', function (e) { if (!e.target.closest || !e.target.closest('.scroll,.fired-scroll,.home')) e.preventDefault(); }, { passive: false });
+  document.addEventListener('dblclick', function (e) { e.preventDefault(); });
+  showTab('play');
+  setTimeout(function () { $('splash').classList.add('gone'); }, reduced() ? 150 : 1100);
+  // test/debug hook (read-only snapshot)
+  window.__hotseat = { state: function () { return run ? JSON.parse(JSON.stringify(run)) : null; }, profile: function () { return JSON.parse(JSON.stringify(profile)); }, shareText: function () { return run && run.ended ? shareText() : null; } };
+})();
+
+</script>
+<script>if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) { window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function (e) { console.warn("SW registration failed", e); }); }); }</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 /* Hot Seat service worker. Navigations are network-first (so a new deploy shows up on the next launch when
    online, falling back to cache offline); other same-origin assets are cache-first. */
-const CACHE = 'hotseat-v1.1.0-79535d81';
+const CACHE = 'hotseat-v1.2.0-ec55e4c6';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
